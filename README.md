@@ -1,10 +1,10 @@
 <div align="center">
 
-# JSON Vision
+# NextJSON
 
 ### The Most Powerful JSON Formatter & Viewer for Chrome
 
-[![Chrome Web Store](https://img.shields.io/badge/Chrome_Web_Store-v3.9.7-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white)](https://chrome.google.com/webstore/detail/glmpfaiijaffmbihnkhneboblmkocnmj)
+[![Chrome Web Store](https://img.shields.io/badge/Chrome_Web_Store-v4.0-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white)](https://chrome.google.com/webstore/detail/glmpfaiijaffmbihnkhneboblmkocnmj)
 [![Manifest V3](https://img.shields.io/badge/Manifest-V3-34A853?style=for-the-badge&logo=googlechrome&logoColor=white)](#)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)](#license)
 [![Zero Dependencies](https://img.shields.io/badge/Dependencies-Zero-success?style=for-the-badge)](#architecture)
@@ -17,9 +17,9 @@
 
 </div>
 
-## Why JSON Vision?
+## Why NextJSON?
 
-Most JSON formatters stop at syntax highlighting. JSON Vision is a **full-featured JSON IDE** in your browser — with a tree explorer, graph diagrams, a JQ query engine, diff comparison, inline editing, and six export formats. Built with pure vanilla JavaScript, no frameworks, no build step, no bloat.
+Most JSON formatters stop at syntax highlighting. NextJSON is a **full-featured JSON IDE** in your browser — with a tree explorer, graph diagrams, a JQ query engine, diff comparison, inline editing, and six export formats. Built with pure vanilla JavaScript, no frameworks, no build step, no bloat.
 
 ## Features
 
@@ -166,12 +166,12 @@ Raw JSON, Minified JSON, cURL command, JavaScript (ES6), Python dict, TypeScript
 
 ### Chrome Web Store
 
-[**Install JSON Vision**](https://chrome.google.com/webstore/detail/glmpfaiijaffmbihnkhneboblmkocnmj) — one click, auto-updates.
+[**Install NextJSON**](https://chrome.google.com/webstore/detail/glmpfaiijaffmbihnkhneboblmkocnmj) — one click, auto-updates.
 
 ### Manual (Developer Mode)
 
 ```bash
-git clone https://github.com/AwaisdotCodes/json-vision.git
+git clone https://github.com/AwaisdotCodes/NextJSON.git
 ```
 
 1. Open `chrome://extensions/`
@@ -180,7 +180,7 @@ git clone https://github.com/AwaisdotCodes/json-vision.git
 
 ## Usage
 
-**Automatic** — Navigate to any `.json` URL or API endpoint. JSON Vision activates automatically.
+**Automatic** — Navigate to any `.json` URL or API endpoint. NextJSON activates automatically.
 
 **Manual** — Click the extension icon, paste JSON, hit `Ctrl+Enter` or click **Format JSON**.
 
@@ -217,6 +217,6 @@ html/
 
 <div align="center">
 
-**Built by [awaisdotcodes](https://github.com/AwaisdotCodes)**
+**Built by [sourcelogs.com](https://sourcelogs.com)**
 
 </div>

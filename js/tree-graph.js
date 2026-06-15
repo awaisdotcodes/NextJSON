@@ -288,8 +288,8 @@
         background: var(--node-bg, #1a1a2e);
         border: 1px solid var(--node-border, #2d2d44);
         border-radius: 6px;
-        font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
-        font-size: 12px;
+        font-family: 'JetBrains Mono', ui-monospace, 'Menlo', monospace;
+        font-size: 14.4px;
         overflow: hidden;
         cursor: pointer;
         user-select: none;
@@ -310,7 +310,7 @@
           padding: 2px 10px;
           color: #666;
           font-style: italic;
-          font-size: 11px;
+          font-size: 13.2px;
         `;
         moreRow.textContent = `... ${node.rows.length - this.config.maxRowsPerNode} more`;
         el.appendChild(moreRow);
@@ -415,7 +415,7 @@
       collapseBtn.className = 'collapse-btn';
       collapseBtn.style.cssText = `
         color: #555;
-        font-size: 10px;
+        font-size: 12px;
         margin-right: 6px;
         transition: transform 0.2s;
       `;
@@ -435,7 +435,7 @@
       const count = childType === 'array' ? child.node.data.length : Object.keys(child.node.data || {}).length;
       typeEl.style.cssText = `
         color: ${this.getTypeColor(childType)};
-        font-size: 11px;
+        font-size: 13.2px;
       `;
       typeEl.textContent = childType === 'array' ? `[${count}]` : `{${count}}`;
       

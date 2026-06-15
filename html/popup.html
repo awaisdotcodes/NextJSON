@@ -1,270 +1,216 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light" style="width:750px;height:550px">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>JSON Vision</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-
-    body {
-      width: 572px;
-      background: #111113;
-      color: #d4d4d8;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      font-size: 15px;
-    }
-
-    .top-bar {
-      height: 3px;
-      background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 55%, #06b6d4 100%);
-    }
-
-    .container {
-      padding: 20px 22px 22px;
-    }
-
-    /* ── Header ── */
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      text-decoration: none;
-      color: inherit;
-      transition: opacity 0.15s;
-    }
-    .brand:hover { opacity: 0.8; }
-
-    .brand img { width: 33px; height: 33px; flex-shrink: 0; }
-
-    .brand-text { display: flex; flex-direction: column; gap: 1px; }
-
-    .brand-name {
-      font-size: 18px;
-      font-weight: 700;
-      color: #f4f4f5;
-      letter-spacing: -0.2px;
-      line-height: 1.1;
-    }
-
-    .brand-version {
-      font-size: 11px;
-      color: #52525b;
-      font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
-      letter-spacing: 0.2px;
-    }
-
-    .header-right {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 5px;
-    }
-
-    .status-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 3px 10px 3px 8px;
-      background: rgba(34, 197, 94, 0.08);
-      border: 1px solid rgba(34, 197, 94, 0.18);
-      border-radius: 20px;
-      font-size: 11px;
-      font-weight: 500;
-      color: #4ade80;
-      letter-spacing: 0.1px;
-    }
-
-    .status-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: #4ade80;
-      flex-shrink: 0;
-      animation: pulse-dot 2.8s ease-in-out infinite;
-    }
-
-    @keyframes pulse-dot {
-      0%, 70%, 100% { opacity: 1; }
-      35% { opacity: 0.25; }
-    }
-
-    .credit {
-      font-size: 11px;
-      color: #3f3f46;
-    }
-    .credit a {
-      color: #52525b;
-      text-decoration: none;
-      transition: color 0.15s;
-    }
-    .credit a:hover { color: #818cf8; }
-
-    /* ── Textarea ── */
-    .input-label {
-      font-size: 10px;
-      font-weight: 600;
-      color: #52525b;
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-      margin-bottom: 6px;
-    }
-
-    textarea {
-      width: 100%;
-      height: 317px;
-      display: block;
-      background: #18181b;
-      border: 1px solid #27272a;
-      border-radius: 8px;
-      color: #e4e4e7;
-      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
-      font-size: 14px;
-      padding: 14px 15px;
-      resize: vertical;
-      outline: none;
-      transition: border-color 0.15s, box-shadow 0.15s;
-      line-height: 1.65;
-      margin-bottom: 13px;
-    }
-
-    textarea:focus {
-      border-color: #6366f1;
-      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.13);
-    }
-
-    textarea::placeholder { color: #3f3f46; }
-
-    /* ── Buttons ── */
-    .button-row {
-      display: flex;
-      gap: 8px;
-    }
-
-    button {
-      border: none;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-
-    .btn-clear {
-      padding: 12px 18px;
-      background: transparent;
-      border: 1px solid #27272a;
-      color: #71717a;
-      white-space: nowrap;
-    }
-    .btn-clear:hover {
-      background: #27272a;
-      color: #a1a1aa;
-      border-color: #3f3f46;
-    }
-
-    .btn-format {
-      flex: 1;
-      padding: 12px 22px;
-      background: #6366f1;
-      color: #fff;
-      font-weight: 600;
-      letter-spacing: 0.1px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-    }
-    .btn-format:hover {
-      background: #4f46e5;
-      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.22), 0 2px 8px rgba(99, 102, 241, 0.28);
-      transform: translateY(-1px);
-    }
-    .btn-format:active {
-      transform: none;
-      box-shadow: none;
-      background: #4338ca;
-    }
-
-    .shortcut-hint {
-      font-size: 11px;
-      font-weight: 400;
-      opacity: 0.65;
-      padding: 2px 6px;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 4px;
-      font-family: 'SF Mono', Consolas, monospace;
-      letter-spacing: 0;
-    }
-
-    /* ── Error ── */
-    .error-message {
-      display: none;
-      margin-top: 10px;
-      padding: 10px 13px;
-      background: rgba(239, 68, 68, 0.08);
-      border: 1px solid rgba(239, 68, 68, 0.22);
-      border-radius: 8px;
-      color: #f87171;
-      font-size: 12.5px;
-      line-height: 1.5;
-    }
-
-    .error-message.show { display: block; }
-
-    .error-message::before {
-      content: '⚠ ';
-      font-size: 13px;
-    }
-  </style>
+  <title>NextJSON</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/popup.css">
 </head>
-<body>
-  <div class="top-bar"></div>
-  <div class="container">
+<body class="pp">
+  <!-- ========== Top bar (44px) ========== -->
+  <div class="pp-top">
+    <div class="pp-brand">
+      <img class="pp-logo" src="../icons/logo.png" width="20" height="20" alt="NextJSON">
+      <span class="pp-brand-name">NextJSON</span>
+      <span class="pp-ver">4.0</span>
+    </div>
+    <div class="pp-divider"></div>
+    <span class="pp-status"><span class="dot"></span>Active</span>
 
-    <div class="header">
-      <a href="https://dub.sh/sourcelogs" target="_blank" class="brand">
-        <img src="../icons/logo.png" alt="JSON Vision">
-        <div class="brand-text">
-          <span class="brand-name">JSON Vision</span>
-          <span class="brand-version">v3.9.7</span>
-        </div>
-      </a>
-      <div class="header-right">
-        <div class="status-badge">
-          <span class="status-dot"></span>
-          Active on JSON pages
-        </div>
-        <div class="credit">by <a href="https://dub.sh/sourcelogs" target="_blank">sourcelogs.com</a></div>
+    <div class="pp-spacer"></div>
+
+    <!-- Output-only group (View segmented + Expand/Collapse + Find) -->
+    <div class="pp-output-only" id="pp-output-tools-left" hidden>
+      <div class="pp-seg" id="view-seg">
+        <button class="pp-seg-btn active" data-view="tree" type="button" title="Tree">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h2M3 8h4M3 12h6"/><circle cx="2" cy="4" r=".7" fill="currentColor"/><circle cx="2" cy="8" r=".7" fill="currentColor"/><circle cx="2" cy="12" r=".7" fill="currentColor"/></svg>
+          Tree
+        </button>
+        <button class="pp-seg-btn" data-view="raw" type="button" title="Raw">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4L1 8l4 4M11 4l4 4-4 4M9 3l-2 10"/></svg>
+          Raw
+        </button>
       </div>
+      <div class="pp-divider"></div>
+      <button class="pp-tb-btn iconly" id="expand-btn" title="Expand all" type="button">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6V3h3M13 6V3h-3M3 10v3h3M13 10v3h-3"/></svg>
+      </button>
+      <button class="pp-tb-btn iconly" id="collapse-btn" title="Collapse all" type="button">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v3H3M10 3v3h3M6 13v-3H3M10 13v-3h3"/></svg>
+      </button>
+      <div class="pp-divider"></div>
+      <div class="pp-find" id="pp-find">
+        <span class="ico"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg></span>
+        <input type="text" id="find-input" placeholder="Find…" autocomplete="off">
+        <span class="hits" id="find-hits"></span>
+        <button class="opts" id="find-opts-btn" type="button" title="Search options">
+          <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 4h7M3 12h4M9 12h4"/><circle cx="11" cy="4" r="1.5"/><circle cx="7" cy="12" r="1.5"/></svg>
+        </button>
+        <div class="pp-pop pp-find-pop" id="find-pop" hidden style="min-width:220px">
+          <div class="pp-pop-section">Match in</div>
+          <div class="pp-pop-item" id="opt-keys">
+            <span class="pp-pop-cb on" id="cb-keys"><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 5.2L4 7.2L8 3"/></svg></span>
+            <span>Keys</span>
+          </div>
+          <div class="pp-pop-item" id="opt-values">
+            <span class="pp-pop-cb on" id="cb-values"><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 5.2L4 7.2L8 3"/></svg></span>
+            <span>Values</span>
+          </div>
+          <div class="pp-pop-item" id="opt-case">
+            <span class="pp-pop-cb" id="cb-case"></span>
+            <span>Case sensitive</span>
+          </div>
+        </div>
+      </div>
+      <div class="pp-divider"></div>
     </div>
 
-    <div class="input-label">Paste JSON</div>
-    <textarea
-      id="json-input"
-      placeholder='{ "key": "value", "array": [1, 2, 3] }'
-      spellcheck="false"
-      autofocus
-    ></textarea>
+    <!-- Source button (always visible — in input mode it's a no-op label) -->
+    <button class="pp-tb-btn" id="source-btn" type="button" title="Edit source">
+      <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 2.5L13.5 5L5.5 13H3v-2.5z"/></svg>
+      <span>Source</span>
+    </button>
 
-    <div class="button-row">
-      <button class="btn-clear" id="clear-btn">Clear</button>
-      <button class="btn-format" id="format-btn">
-        Format JSON
-        <span class="shortcut-hint">⌘↵</span>
+    <div class="pp-divider"></div>
+
+    <!-- Theme segmented -->
+    <div class="pp-seg" id="theme-seg">
+      <button class="pp-seg-btn active" data-theme="light" type="button" title="Light">
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="2.5"/><path d="M8 1.5v2M8 12.5v2M14.5 8h-2M3.5 8h-2M12.6 3.4l-1.4 1.4M4.8 11.2l-1.4 1.4M12.6 12.6l-1.4-1.4M4.8 4.8L3.4 3.4"/></svg>
+      </button>
+      <button class="pp-seg-btn" data-theme="dark" type="button" title="Dark">
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 9.5A5.5 5.5 0 0 1 6.5 3a5.5 5.5 0 1 0 6.5 6.5z"/></svg>
       </button>
     </div>
 
-    <div class="error-message" id="error-message"></div>
+    <!-- Output-only group right (Copy + Export + More) -->
+    <div class="pp-output-only" id="pp-output-tools-right" hidden>
+      <div class="pp-divider"></div>
+
+      <div class="pp-pop-anchor">
+        <button class="pp-tb-btn iconly" id="copy-btn" type="button" title="Copy">
+          <svg id="copy-icon-default" width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="9" height="9" rx="1.5"/><path d="M3 11V3a1 1 0 0 1 1-1h7"/></svg>
+          <svg id="copy-icon-check" width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" hidden><path d="M3.5 8.5L6.5 11.5L12.5 5"/></svg>
+        </button>
+        <div class="pp-pop" id="copy-pop" hidden>
+          <div class="pp-pop-item" data-copy="formatted"><span>Formatted</span><span class="badge" id="copy-formatted-size"></span></div>
+          <div class="pp-pop-item" data-copy="minified"><span>Minified</span><span class="badge" id="copy-minified-size"></span></div>
+        </div>
+      </div>
+
+      <div class="pp-pop-anchor">
+        <button class="pp-tb-btn iconly" id="export-btn" type="button" title="Export">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v8M5 7l3 3 3-3M3 13h10"/></svg>
+        </button>
+        <div class="pp-pop" id="export-pop" hidden style="min-width:160px">
+          <div class="pp-pop-item" data-export="json"><span>JSON</span><span class="badge">.json</span></div>
+          <div class="pp-pop-item" data-export="min"><span>Minified</span><span class="badge">.json</span></div>
+          <div class="pp-pop-item" data-export="csv"><span>CSV</span><span class="badge">.csv</span></div>
+          <div class="pp-pop-item" data-export="yaml"><span>YAML</span><span class="badge">.yml</span></div>
+          <div class="pp-pop-item" data-export="xml"><span>XML</span><span class="badge">.xml</span></div>
+        </div>
+      </div>
+
+      <div class="pp-pop-anchor">
+        <button class="pp-tb-btn iconly" id="more-btn" type="button" title="More">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><circle cx="3" cy="8" r="1.3"/><circle cx="8" cy="8" r="1.3"/><circle cx="13" cy="8" r="1.3"/></svg>
+        </button>
+        <div class="pp-pop" id="more-pop" hidden>
+          <div class="pp-pop-section">Display</div>
+          <div class="pp-pop-item" id="opt-sort">
+            <span class="pp-pop-cb" id="cb-sort"></span>
+            <span>Sort keys A→Z</span>
+          </div>
+          <div class="pp-pop-item" id="opt-wrap">
+            <span class="pp-pop-cb on" id="cb-wrap"><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 5.2L4 7.2L8 3"/></svg></span>
+            <span>Wrap long values</span>
+          </div>
+          <div class="pp-pop-divider"></div>
+          <div class="pp-pop-section">Open</div>
+          <div class="pp-pop-item" id="opt-fullpage"><span>Open in full page</span><span class="kbd">⌘O</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== Body ========== -->
+  <div class="pp-body">
+
+    <!-- Input mode -->
+    <div class="pp-input" id="pp-input">
+      <div class="pp-tabs">
+        <button class="pp-tab active" data-source="paste" type="button">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="8" height="11" rx="1.5"/><path d="M6 3V2.5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1V3"/></svg>
+          Paste
+        </button>
+        <button class="pp-tab" data-source="fetch" type="button">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 9.5a3 3 0 0 0 4.24 0l2-2a3 3 0 0 0-4.24-4.24l-1 1"/><path d="M9 6.5a3 3 0 0 0-4.24 0l-2 2a3 3 0 0 0 4.24 4.24l1-1"/></svg>
+          Fetch URL
+        </button>
+      </div>
+
+      <!-- Paste pane -->
+      <div class="pp-paste" id="pane-paste">
+        <textarea id="paste-input" spellcheck="false" placeholder='Paste JSON here…  e.g. { "id": 42, "tags": ["alpha","beta"] }'></textarea>
+        <div class="pp-paste-meta" id="paste-meta">
+          <span id="paste-meta-state">○ awaiting input</span>
+          <span class="cta">
+            <span class="pp-open-here" id="open-here-paste" title="Render the formatted JSON inside this popup instead of opening it in a new tab">
+              <span class="pp-pop-cb" id="cb-open-here-paste"></span>
+              <span>Open here</span>
+            </span>
+            <span class="kbd">⌘↵</span>
+            <button class="pp-go" id="format-btn" type="button" disabled>Format <span class="arrow">→</span></button>
+          </span>
+        </div>
+      </div>
+
+      <!-- Fetch pane -->
+      <div class="pp-fetch" id="pane-fetch" hidden>
+        <div class="pp-fetch-row">
+          <div class="method-seg" id="method-seg">
+            <button class="active" data-method="GET" type="button">GET</button>
+            <button data-method="POST" type="button">POST</button>
+            <button data-method="PUT" type="button">PUT</button>
+            <button data-method="DELETE" type="button">DELETE</button>
+          </div>
+          <input type="text" id="url-input" placeholder="https://api.example.com/endpoint.json" autocomplete="off">
+          <span class="pp-open-here" id="open-here-fetch" title="Render the fetched JSON inside this popup instead of opening it in a new tab">
+            <span class="pp-pop-cb" id="cb-open-here-fetch"></span>
+            <span>Open here</span>
+          </span>
+          <button class="pp-go" id="fetch-btn" type="button">Fetch <span class="arrow">→</span></button>
+        </div>
+        <div class="pp-fetch-status" id="fetch-status" hidden></div>
+        <div class="pp-fetch-section">Headers <span class="line"></span></div>
+        <div class="pp-kv-list" id="headers-list"></div>
+        <button class="pp-kv-add" id="add-header-btn" type="button">+ Add header</button>
+        <div class="pp-fetch-section">Recent <span class="line"></span></div>
+        <div class="pp-recents" id="recents-list">
+          <div class="pp-recents-empty">No recent fetches yet.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Output mode -->
+    <div class="pp-output" id="pp-output" hidden>
+      <div class="pp-tree-wrap" id="tree-wrap"></div>
+      <pre class="pp-raw" id="raw-pre" hidden></pre>
+    </div>
 
   </div>
+
+  <!-- ========== Bottom status (24px) ========== -->
+  <div class="pp-bottom" id="pp-bottom">
+    <span id="status-left">○ paste JSON to begin</span>
+    <span class="pp-bottom-right">
+      <span id="status-size"></span>
+      <span class="src">sourcelogs.com</span>
+    </span>
+  </div>
+
   <script src="../js/popup.js"></script>
 </body>
 </html>

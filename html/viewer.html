@@ -1,196 +1,242 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>JSON Vision — Best JSON Formatter and JSON Validator Chrome Extension</title>
+  <title>NextJSON — JSON Parser, JSON Formatter, and JSON Viewer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/viewer.css">
   <link rel="stylesheet" href="../css/graph.css">
   <link rel="stylesheet" href="../css/ui-renderer.css">
 </head>
-<body>
-  <!-- Main Toolbar -->
-  <div class="toolbar">
-    <div class="toolbar-left">
-      <div class="brand">
-        <a href="https://dub.sh/sourcelogs" target="_blank" class="brand-link">
-          <img class="brand-icon" src="../icons/logo.png" alt="JSON Vision">
-          <span class="brand-name">JSON Vision</span>
-        </a>
-        <span class="brand-separator">|</span>
-        <span class="brand-tagline">by <a href="https://dub.sh/sourcelogs" target="_blank">sourcelogs.com</a></span>
-      </div>
-    </div>
-    <div class="toolbar-right">
-      <!-- Undo/Redo buttons - hidden by default -->
-      <div class="toolbar-group undo-redo-group" id="undo-redo-group" style="display: none;">
-        <button class="btn btn-icon" id="undo-btn" title="Undo (Ctrl+Z)" disabled>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"></path><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path></svg>
-        </button>
-        <button class="btn btn-icon" id="redo-btn" title="Redo (Ctrl+Y)" disabled>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 7v6h-6"></path><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"></path></svg>
-        </button>
-        <div class="btn-divider"></div>
-      </div>
-      <div class="dropdown" id="theme-dropdown">
-        <button class="btn dropdown-toggle" id="theme-btn" title="Change Theme">
-          <span class="theme-btn-dot" style="background:#0c0c0d"></span>
-          <span class="theme-btn-label">Dark</span>
-          <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor" class="dropdown-arrow"><path d="M4 6l4 4 4-4z"/></svg>
-        </button>
-        <div class="dropdown-menu dropdown-menu-left" id="theme-menu">
-          <div class="dropdown-menu-inner">
-            <div class="dropdown-item theme-item" data-theme="dark"><span class="theme-dot" style="background:#0c0c0d"></span>Dark</div>
-            <div class="dropdown-item theme-item" data-theme="light"><span class="theme-dot" style="background:#ffffff; border: 1px solid #ccc;"></span>Light</div>
-            <div class="dropdown-divider"></div>
-            <div class="dropdown-item theme-item" data-theme="monokai"><span class="theme-dot" style="background:#272822"></span>Monokai</div>
-            <div class="dropdown-item theme-item" data-theme="dracula"><span class="theme-dot" style="background:#282a36"></span>Dracula</div>
-            <div class="dropdown-item theme-item" data-theme="nord"><span class="theme-dot" style="background:#2e3440"></span>Nord</div>
-            <div class="dropdown-item theme-item" data-theme="solarized"><span class="theme-dot" style="background:#002b36"></span>Solarized Dark</div>
-            <div class="dropdown-item theme-item" data-theme="github"><span class="theme-dot" style="background:#0d1117"></span>GitHub Dark</div>
-          </div>
-        </div>
-      </div>
-      <div class="btn-divider"></div>
-      <div class="toolbar-group">
-        <button class="btn" id="expand-all" title="Expand All">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
-          <span>Expand</span>
-        </button>
-        <button class="btn" id="collapse-all" title="Collapse All">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 14 10 14 10 20"></polyline><polyline points="20 10 14 10 14 4"></polyline><line x1="10" y1="14" x2="3" y2="21"></line><line x1="21" y1="3" x2="14" y2="10"></line></svg>
-          <span>Collapse</span>
-        </button>
-      </div>
-      <div class="btn-divider"></div>
-      <div class="toolbar-group">
-        <div class="dropdown" id="copy-dropdown">
-          <button class="btn dropdown-toggle" id="copy-btn" title="Copy As"><span>Copy</span><svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor" class="dropdown-arrow"><path d="M4 6l4 4 4-4z"/></svg></button>
-          <div class="dropdown-menu" id="copy-menu">
-            <div class="dropdown-menu-inner">
-              <div class="dropdown-item" data-action="copy-json">Copy Raw JSON</div>
-              <div class="dropdown-item" data-action="copy-minified">Copy Minified JSON</div>
-              <div class="dropdown-divider"></div>
-              <div class="dropdown-item" data-action="copy-curl">Copy as cURL</div>
-              <div class="dropdown-item" data-action="copy-js">Copy as JavaScript</div>
-              <div class="dropdown-item" data-action="copy-python">Copy as Python</div>
-              <div class="dropdown-item" data-action="copy-typescript">Copy as TypeScript Interface</div>
-            </div>
-          </div>
-        </div>
-        <div class="dropdown" id="export-dropdown">
-          <button class="btn dropdown-toggle" id="export-btn" title="Export As"><span>Export As</span><svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor" class="dropdown-arrow"><path d="M4 6l4 4 4-4z"/></svg></button>
-          <div class="dropdown-menu" id="export-menu">
-            <div class="dropdown-menu-inner">
-              <div class="dropdown-item" data-action="export-json">Export as JSON</div>
-              <div class="dropdown-item" data-action="export-csv">Export as CSV</div>
-              <div class="dropdown-item" data-action="export-excel">Export as Excel</div>
-              <div class="dropdown-divider"></div>
-              <div class="dropdown-item" data-action="export-yaml">Export as YAML</div>
-              <div class="dropdown-item" data-action="export-typescript">Export as TypeScript</div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="btn-divider"></div>
-      <button class="btn" id="import-url-btn" title="Import from URL">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
-        <span>Import URL</span>
+<body class="osp">
+  <!-- ========== Top Bar (46px) ========== -->
+  <div class="osp-top">
+    <!-- Brand cluster -->
+    <a class="osp-brand" href="https://dub.sh/sourcelogs" target="_blank" rel="noopener">
+      <img class="osp-logo" src="../icons/logo.png" width="22" height="22" alt="NextJSON">
+      <span class="osp-brand-name">NextJSON</span>
+      <span class="osp-ver">4.0</span>
+    </a>
+
+    <div class="osp-divider"></div>
+
+    <!-- Status pill -->
+    <span class="osp-status" id="osp-status"><span class="dot"></span><span class="osp-status-label">Active</span></span>
+
+    <div class="osp-divider"></div>
+
+    <!-- View segmented (Tree / Raw) -->
+    <div class="osp-seg" id="view-segmented">
+      <button class="osp-seg-btn active" id="tree-seg-btn" data-view="tree" type="button">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h2M3 8h4M3 12h6"/><circle cx="2" cy="4" r=".7" fill="currentColor"/><circle cx="2" cy="8" r=".7" fill="currentColor"/><circle cx="2" cy="12" r=".7" fill="currentColor"/></svg>
+        <span>Tree</span>
       </button>
-      <div class="btn-divider"></div>
-      <div class="view-switcher" role="group" aria-label="View mode">
-      <button class="btn btn-view" id="compare-btn" title="Diff — compare two JSON documents">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10"></path><path d="M12 20V4"></path><path d="M6 20v-6"></path></svg>
-        <span>Diff</span>
-      </button>
-      <button class="btn btn-view" id="table-btn" title="Table — view arrays as rows">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="3" y1="15" x2="21" y2="15"></line><line x1="9" y1="3" x2="9" y2="21"></line></svg>
-        <span>Table</span>
-      </button>
-      <button class="btn btn-view" id="graph-btn" title="Graph — interactive node diagram">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
-        <span>Graph</span>
-      </button>
-      <button class="btn btn-view" id="ui-btn" title="UI — render JSON as components">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
-        <span>UI</span>
-      </button>
-      <button class="btn btn-view" id="raw-btn" title="Raw — pretty-print or minify JSON">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+      <button class="osp-seg-btn" id="raw-btn" data-view="raw" type="button" title="Raw — pretty-print or minify JSON">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4L1 8l4 4M11 4l4 4-4 4M9 3l-2 10"/></svg>
         <span id="raw-btn-text">Raw</span>
       </button>
-      </div><!-- /.view-switcher -->
     </div>
-  </div>
 
-  <!-- Search Bar with Stats and Path -->
-  <div class="search-bar">
-    <div class="search-left">
-      <div class="search-input-wrapper">
-        <input type="text" id="search-input" placeholder="Search keys, values, or path (e.g. .product.variants[].price)">
-        <button class="search-clear" id="search-clear" title="Clear">×</button>
+    <div class="osp-divider"></div>
+
+    <!-- Expand / Collapse — Split Pro corner-bracket icons (output-base.jsx) -->
+    <button class="osp-tb-btn" id="expand-all" title="Expand All" type="button">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6V3h3M13 6V3h-3M3 10v3h3M13 10v3h-3"/></svg>
+      <span>Expand</span>
+    </button>
+    <button class="osp-tb-btn" id="collapse-all" title="Collapse All" type="button">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v3H3M10 3v3h3M6 13v-3H3M10 13v-3h3"/></svg>
+      <span>Collapse</span>
+    </button>
+
+    <div class="osp-divider"></div>
+
+    <!-- Fetch URL -->
+    <button class="osp-tb-btn" id="import-url-btn" title="Fetch from URL" type="button">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 9.5a3 3 0 0 0 4.24 0l2-2a3 3 0 0 0-4.24-4.24l-1 1"/><path d="M9 6.5a3 3 0 0 0-4.24 0l-2 2a3 3 0 0 0 4.24 4.24l1-1"/></svg>
+      <span>Fetch URL</span>
+    </button>
+
+    <div class="osp-spacer"></div>
+
+    <!-- Find input -->
+    <div class="osp-find" id="osp-find">
+      <span class="ico"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg></span>
+      <input type="text" id="search-input" placeholder="Find in JSON…" autocomplete="off">
+      <span class="hits" id="search-hits"></span>
+      <button class="search-clear" id="search-clear" title="Clear" type="button">×</button>
+      <button class="opts" id="find-opts-btn" title="Search options" type="button">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 4h7M3 12h4M9 12h4"/><circle cx="11" cy="4" r="1.5"/><circle cx="7" cy="12" r="1.5"/></svg>
+      </button>
+
+      <!-- Find advanced popover -->
+      <div class="osp-pop osp-find-pop" id="find-popover" style="display:none;">
+        <div class="osp-pop-section">Match in</div>
+        <div class="osp-pop-item" id="find-opt-keys">
+          <span class="osp-pop-cb on" id="search-keys-cb"><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 5.2L4 7.2L8 3"/></svg></span>
+          <span>Keys</span>
+          <input type="checkbox" id="search-keys" checked hidden>
+        </div>
+        <div class="osp-pop-item" id="find-opt-values">
+          <span class="osp-pop-cb on" id="search-values-cb"><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 5.2L4 7.2L8 3"/></svg></span>
+          <span>Values</span>
+          <input type="checkbox" id="search-values" checked hidden>
+        </div>
+        <div class="osp-pop-item" id="find-opt-case">
+          <span class="osp-pop-cb" id="search-case-cb"></span>
+          <span>Case sensitive</span>
+          <input type="checkbox" id="search-case" hidden>
+        </div>
+        <div class="osp-pop-divider"></div>
+        <div class="osp-pop-section">JQ expression</div>
+        <div style="padding: 0 9px 8px;">
+          <input class="osp-pop-input" id="jq-quick-input" placeholder=".items[] | select(.id)" autocomplete="off">
+        </div>
+        <div class="osp-pop-divider"></div>
+        <div class="osp-pop-item" id="jq-mode-btn" title="Open full JQ panel">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4L1 8l4 4M11 4l4 4-4 4"/></svg>
+          <span>Open JQ panel</span>
+          <span class="kbd">⌘J</span>
+        </div>
       </div>
-      <div class="search-options">
-        <label class="search-option"><input type="checkbox" id="search-keys" checked> Keys</label>
-        <label class="search-option"><input type="checkbox" id="search-values" checked> Values</label>
-        <label class="search-option"><input type="checkbox" id="search-case"> Case sensitive</label>
-        <button class="btn btn-jq" id="jq-mode-btn">JQ Query</button>
-      </div>
-      <div class="search-nav" id="search-nav">
-        <button class="search-nav-btn" id="search-prev" title="Previous match">▲</button>
+
+      <!-- Hidden compatibility nodes for search nav -->
+      <div class="search-nav" id="search-nav" style="display:none;">
+        <button class="search-nav-btn" id="search-prev" type="button">▲</button>
         <span class="search-nav-info" id="search-nav-info">0 / 0</span>
-        <button class="search-nav-btn" id="search-next" title="Next match">▼</button>
+        <button class="search-nav-btn" id="search-next" type="button">▼</button>
       </div>
-      <span class="search-results" id="search-results"></span>
+      <span class="search-results" id="search-results" style="display:none;"></span>
     </div>
-    <div class="search-right">
-      <div class="path-display" id="breadcrumb-bar">
-        <div class="breadcrumb-content">
-          <span class="breadcrumb-item" data-path="">root</span>
-        </div>
-        <button class="breadcrumb-copy-btn" id="breadcrumb-copy" title="Copy Path">
-          <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M4 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V2zm2-1a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H6zM2 5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-1h1v1a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1v1H2z"/></svg>
-        </button>
-      </div>
-      <div class="stats" id="stats"></div>
-    </div>
-  </div>
 
-  <!-- JQ Query Modal -->
-  <div class="modal" id="jq-modal" style="display: none;">
-    <div class="modal-backdrop"></div>
-    <div class="modal-content jq-modal-content">
-      <div class="modal-header">
-        <h3>JQ Query</h3>
-        <button class="btn btn-icon modal-close" id="jq-modal-close">×</button>
+    <div class="osp-divider"></div>
+
+    <!-- Theme segmented (sun / moon) -->
+    <div class="osp-seg" id="theme-segmented">
+      <button class="osp-seg-btn active" id="theme-light-btn" data-theme="light" title="Light" type="button">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="2.5"/><path d="M8 1.5v2M8 12.5v2M14.5 8h-2M3.5 8h-2M12.6 3.4l-1.4 1.4M4.8 11.2l-1.4 1.4M12.6 12.6l-1.4-1.4M4.8 4.8L3.4 3.4"/></svg>
+      </button>
+      <button class="osp-seg-btn" id="theme-dark-btn" data-theme="dark" title="Dark" type="button">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 9.5A5.5 5.5 0 0 1 6.5 3a5.5 5.5 0 1 0 6.5 6.5z"/></svg>
+      </button>
+    </div>
+
+    <div class="osp-divider"></div>
+
+    <!-- Undo/Redo (hidden until edit mode) -->
+    <div class="undo-redo-group" id="undo-redo-group" style="display:none;">
+      <button class="osp-tb-btn iconly" id="undo-btn" title="Undo (Ctrl+Z)" disabled type="button">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"></path><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path></svg>
+      </button>
+      <button class="osp-tb-btn iconly" id="redo-btn" title="Redo (Ctrl+Y)" disabled type="button">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 7v6h-6"></path><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"></path></svg>
+      </button>
+      <div class="osp-divider"></div>
+    </div>
+
+    <!-- Copy menu -->
+    <div class="dropdown" id="copy-dropdown">
+      <button class="osp-tb-btn dropdown-toggle" id="copy-btn" type="button">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="9" height="9" rx="1.5"/><path d="M3 11V3a1 1 0 0 1 1-1h7"/></svg>
+        <span id="copy-btn-label">Copy</span>
+        <svg class="chev" width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M2 3.5L4.5 6L7 3.5"/></svg>
+      </button>
+      <div class="osp-pop dropdown-menu" id="copy-menu">
+        <div class="osp-pop-item" data-action="copy-json"><span>Copy formatted</span><span class="badge" id="copy-formatted-size"></span></div>
+        <div class="osp-pop-item" data-action="copy-minified"><span>Copy minified</span><span class="badge" id="copy-min-size"></span></div>
+        <div class="osp-pop-divider"></div>
+        <div class="osp-pop-item" data-action="copy-path"><span>Copy current path</span><span class="kbd">⌘P</span></div>
+        <div class="osp-pop-divider"></div>
+        <div class="osp-pop-section">As code</div>
+        <div class="osp-pop-item" data-action="copy-curl"><span>cURL</span></div>
+        <div class="osp-pop-item" data-action="copy-js"><span>JavaScript</span></div>
+        <div class="osp-pop-item" data-action="copy-python"><span>Python</span></div>
+        <div class="osp-pop-item" data-action="copy-typescript"><span>TypeScript Interface</span></div>
       </div>
-      <div class="modal-body">
-        <div class="jq-input-section">
-          <div class="jq-input-row">
-            <span class="jq-prefix">jq</span>
-            <input type="text" id="jq-input" placeholder=".data.users[] | select(.active)">
-            <button class="btn" id="jq-clear">Clear</button>
-            <button class="btn btn-primary" id="jq-run">Run</button>
-          </div>
-          <div class="jq-examples">
-            <span class="jq-label">Examples:</span>
-            <button class="jq-example" data-query=".">Identity</button>
-            <button class="jq-example" data-query="keys">keys</button>
-            <button class="jq-example" data-query=".[]">Iterate</button>
-            <button class="jq-example" data-query="length">length</button>
-            <button class="jq-example" data-query=".[0]">First</button>
-            <button class="jq-example" data-query=".[-1]">Last</button>
-          </div>
+    </div>
+
+    <!-- Export menu -->
+    <div class="dropdown" id="export-dropdown">
+      <button class="osp-tb-btn dropdown-toggle" id="export-btn" type="button">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v8M5 7l3 3 3-3M3 13h10"/></svg>
+        <span>Export</span>
+        <svg class="chev" width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M2 3.5L4.5 6L7 3.5"/></svg>
+      </button>
+      <div class="osp-pop dropdown-menu" id="export-menu" style="min-width:200px;">
+        <div class="osp-pop-item" data-action="export-csv"><span>CSV</span></div>
+        <div class="osp-pop-item" data-action="export-excel"><span>Excel</span></div>
+        <div class="osp-pop-divider"></div>
+        <div class="osp-pop-item" data-action="export-json"><span>JSON (formatted)</span></div>
+        <div class="osp-pop-item" data-action="export-minified"><span>JSON (minified)</span></div>
+        <div class="osp-pop-divider"></div>
+        <div class="osp-pop-item" data-action="export-yaml"><span>YAML</span></div>
+        <div class="osp-pop-item" data-action="export-typescript"><span>TypeScript</span></div>
+      </div>
+    </div>
+
+    <!-- Edit raw JSON -->
+    <button class="osp-tb-btn" id="edit-raw-btn" title="Edit raw JSON" type="button">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 2.5L13.5 5L5.5 13H3v-2.5z"/></svg>
+      <span>Edit</span>
+    </button>
+
+    <!-- More menu -->
+    <div class="dropdown" id="more-dropdown">
+      <button class="osp-tb-btn dropdown-toggle iconly" id="more-btn" title="More" type="button">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><circle cx="3" cy="8" r="1.3"/><circle cx="8" cy="8" r="1.3"/><circle cx="13" cy="8" r="1.3"/></svg>
+      </button>
+      <div class="osp-pop dropdown-menu" id="more-menu">
+        <div class="osp-pop-section">Alternate views</div>
+        <div class="osp-pop-item" id="table-btn" data-view-target="table">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+          <span>Table view</span>
+          <span class="more-active-marker" data-view="table">active</span>
         </div>
-        <div class="jq-results-section">
-          <div class="jq-results-header">Result</div>
-          <div class="jq-results" id="jq-results">
-            <span class="jq-placeholder">Run a query to see results...</span>
-          </div>
+        <div class="osp-pop-item" id="compare-btn" data-view-target="diff">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+          <span>Diff view</span>
+          <span class="more-active-marker" data-view="diff">active</span>
         </div>
-        <div class="jq-actions">
-          <button class="btn" id="jq-copy-result">Copy Result</button>
+        <div class="osp-pop-item" id="graph-btn" data-view-target="graph">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          <span>Graph view</span>
+          <span class="more-active-marker" data-view="graph">active</span>
         </div>
+        <div class="osp-pop-item" id="ui-btn" data-view-target="ui">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+          <span>UI Preview</span>
+          <span class="more-active-marker" data-view="ui">active</span>
+        </div>
+
+        <div class="osp-pop-divider"></div>
+        <div class="osp-pop-section">Display</div>
+        <div class="osp-pop-item" id="more-sort-keys">
+          <span class="osp-pop-cb" id="sort-keys-cb"></span>
+          <span>Sort keys A→Z</span>
+        </div>
+        <div class="osp-pop-item" id="more-wrap">
+          <span class="osp-pop-cb on" id="wrap-cb"><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 5.2L4 7.2L8 3"/></svg></span>
+          <span>Wrap long values</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hidden legacy theme dropdown (kept for JS compatibility) -->
+    <div class="dropdown" id="theme-dropdown" style="display:none;">
+      <button class="btn dropdown-toggle" id="theme-btn">
+        <span class="theme-btn-dot"></span><span class="theme-btn-label"></span>
+      </button>
+      <div class="dropdown-menu" id="theme-menu">
+        <div class="dropdown-item theme-item" data-theme="dark"></div>
+        <div class="dropdown-item theme-item" data-theme="light"></div>
+        <div class="dropdown-item theme-item" data-theme="monokai"></div>
+        <div class="dropdown-item theme-item" data-theme="dracula"></div>
+        <div class="dropdown-item theme-item" data-theme="nord"></div>
+        <div class="dropdown-item theme-item" data-theme="solarized"></div>
+        <div class="dropdown-item theme-item" data-theme="github"></div>
       </div>
     </div>
   </div>
@@ -205,16 +251,16 @@
     </div>
   </div>
 
-  <!-- Main Content Area -->
+  <!-- ========== Main Content ========== -->
   <div class="main-content">
     <!-- JSON Tree View -->
-    <div class="json-container" id="json-container">
+    <div class="json-container osp-tree-wrap" id="json-container">
       <div class="loading" id="loading"><div class="spinner"></div><span>Parsing JSON...</span></div>
       <div id="json-output"></div>
     </div>
 
     <!-- Raw View -->
-    <div class="raw-container" id="raw-container" style="display: none;"><pre id="raw-output"></pre></div>
+    <div class="raw-container osp-tree-wrap" id="raw-container" style="display: none;"><pre id="raw-output"></pre></div>
 
     <!-- Compare/Diff View -->
     <div class="diff-container" id="diff-container" style="display: none;">
@@ -225,14 +271,14 @@
           <p>Paste another JSON below to compare.</p>
         </div>
         <div class="diff-toolbar-right">
-          <button class="btn btn-back" id="diff-back"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M7 3L3 8l4 5v-3h6V6H7V3z"/></svg> Back to Tree</button>
+          <button class="btn btn-back" id="diff-back" type="button"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M7 3L3 8l4 5v-3h6V6H7V3z"/></svg> Back to Tree</button>
         </div>
       </div>
       <div class="diff-input-area">
         <textarea id="diff-input" placeholder="Paste JSON to compare..."></textarea>
         <div class="diff-buttons">
-          <button class="btn btn-primary" id="diff-compare">Compare Now</button>
-          <button class="btn" id="diff-clear">Clear</button>
+          <button class="btn btn-primary" id="diff-compare" type="button">Compare Now</button>
+          <button class="btn" id="diff-clear" type="button">Clear</button>
         </div>
       </div>
       <div class="diff-results" id="diff-results"></div>
@@ -245,20 +291,20 @@
           <span class="table-info" id="table-info"></span>
         </div>
         <div class="table-view-toolbar-right">
-          <button class="btn" id="table-export-json">
+          <button class="btn" id="table-export-json" type="button">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
             Export JSON
           </button>
-          <button class="btn" id="table-export-csv">
+          <button class="btn" id="table-export-csv" type="button">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="3" y1="15" x2="21" y2="15"></line><line x1="9" y1="3" x2="9" y2="21"></line></svg>
             Export CSV
           </button>
-          <button class="btn" id="table-export-excel">
+          <button class="btn" id="table-export-excel" type="button">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
             Export Excel
           </button>
           <div class="table-separator"></div>
-          <button class="btn btn-back" id="table-back"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M7 3L3 8l4 5v-3h6V6H7V3z"/></svg> Back to Tree</button>
+          <button class="btn btn-back" id="table-back" type="button"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M7 3L3 8l4 5v-3h6V6H7V3z"/></svg> Back to Tree</button>
         </div>
       </div>
       <div class="table-content" id="table-content"></div>
@@ -269,28 +315,28 @@
       <div class="graph-toolbar">
         <div class="graph-toolbar-left">
           <div class="graph-legend">
-            <span class="legend-item"><span class="legend-color" style="background:#667eea"></span>Object</span>
+            <span class="legend-item"><span class="legend-color" style="background:#7c3aed"></span>Object</span>
             <span class="legend-item"><span class="legend-color" style="background:#a855f7"></span>Array</span>
-            <span class="legend-item"><span class="legend-color" style="background:#22c55e"></span>String</span>
-            <span class="legend-item"><span class="legend-color" style="background:#3b82f6"></span>Number</span>
-            <span class="legend-item"><span class="legend-color" style="background:#f59e0b"></span>Boolean</span>
-            <span class="legend-item"><span class="legend-color" style="background:#6b7280"></span>Null</span>
+            <span class="legend-item"><span class="legend-color" style="background:#16a34a"></span>String</span>
+            <span class="legend-item"><span class="legend-color" style="background:#c2410c"></span>Number</span>
+            <span class="legend-item"><span class="legend-color" style="background:#0891b2"></span>Boolean</span>
+            <span class="legend-item"><span class="legend-color" style="background:#dc2626"></span>Null</span>
           </div>
         </div>
         <div class="graph-toolbar-right">
-          <button class="btn btn-icon" id="graph-expand-all">⊞</button>
-          <button class="btn btn-icon" id="graph-collapse-all">⊟</button>
+          <button class="btn btn-icon" id="graph-expand-all" type="button">⊞</button>
+          <button class="btn btn-icon" id="graph-collapse-all" type="button">⊟</button>
           <div class="graph-separator"></div>
-          <button class="btn btn-icon" id="graph-zoom-in">+</button>
-          <button class="btn btn-icon" id="graph-zoom-out">−</button>
-          <button class="btn btn-icon" id="graph-reset">⟳</button>
+          <button class="btn btn-icon" id="graph-zoom-in" type="button">+</button>
+          <button class="btn btn-icon" id="graph-zoom-out" type="button">−</button>
+          <button class="btn btn-icon" id="graph-reset" type="button">⟳</button>
           <div class="graph-separator"></div>
-          <button class="btn btn-back" id="graph-back"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M7 3L3 8l4 5v-3h6V6H7V3z"/></svg> Back to Tree</button>
+          <button class="btn btn-back" id="graph-back" type="button"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M7 3L3 8l4 5v-3h6V6H7V3z"/></svg> Back to Tree</button>
         </div>
       </div>
       <div class="graph-canvas" id="graph-canvas"></div>
       <div class="graph-info-panel" id="graph-info-panel">
-        <div class="info-panel-header"><span>Node Details</span><button class="btn btn-icon" id="close-info-panel">×</button></div>
+        <div class="info-panel-header"><span>Node Details</span><button class="btn btn-icon" id="close-info-panel" type="button">×</button></div>
         <div class="info-panel-content" id="info-panel-content"><p class="info-placeholder">Click a node to see details</p></div>
       </div>
     </div>
@@ -299,26 +345,167 @@
     <div class="ui-container" id="ui-container" style="display: none;">
       <div class="ui-toolbar">
         <span class="ui-toolbar-label">JSON to UI Preview</span>
-        <button class="btn btn-back" id="ui-back"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M7 3L3 8l4 5v-3h6V6H7V3z"/></svg> Back to Tree</button>
+        <button class="btn btn-back" id="ui-back" type="button"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M7 3L3 8l4 5v-3h6V6H7V3z"/></svg> Back to Tree</button>
       </div>
       <div class="ui-canvas" id="ui-canvas"></div>
     </div>
   </div>
 
-  <!-- Import URL Modal -->
-  <div class="modal" id="import-modal" style="display: none;">
-    <div class="modal-backdrop"></div>
-    <div class="modal-content">
-      <div class="modal-header"><h3>Import JSON from URL</h3><button class="btn btn-icon modal-close" id="import-modal-close">×</button></div>
-      <div class="modal-body">
-        <label class="modal-label">Enter URL:</label>
-        <input type="url" id="import-url-input" placeholder="https://api.example.com/data.json" class="modal-input">
-        <p class="modal-hint">The extension will fetch and display the JSON response.</p>
-        <div class="modal-error" id="import-error" style="display: none;"></div>
+  <!-- ========== Bottom Status Bar (26px) ========== -->
+  <div class="osp-bottom" id="osp-bottom">
+    <span class="ok">● valid</span>
+    <span id="stats-nodes" class="stat-pill">0 nodes</span>
+    <span id="stats-objects" class="stat-pill">0 objects</span>
+    <span id="stats-arrays" class="stat-pill">0 arrays</span>
+    <span id="stats-depth" class="stat-pill">depth 0</span>
+    <div class="osp-divider" style="height:12px;"></div>
+    <div class="path-display" id="breadcrumb-bar">
+      <div class="breadcrumb-content">
+        <span class="crumb-empty">$ — hover a node to track</span>
       </div>
-      <div class="modal-footer">
-        <button class="btn" id="import-cancel">Cancel</button>
-        <button class="btn btn-primary" id="import-fetch">Fetch JSON</button>
+      <button class="breadcrumb-copy-btn" id="breadcrumb-copy" title="Copy Path" type="button">
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor"><path d="M4 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V2zm2-1a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H6zM2 5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-1h1v1a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1v1H2z"/></svg>
+      </button>
+    </div>
+    <span class="osp-bottom-right">
+      <span id="stats-size"></span>
+      <span class="osp-bottom-sep">·</span>
+      <a class="osp-bottom-link" href="https://dub.sh/sourcelogs" target="_blank" rel="noopener">sourcelogs.com</a>
+    </span>
+  </div>
+
+  <!-- Hidden legacy stats element (some code paths still reference it) -->
+  <div class="stats" id="stats" style="display:none;"></div>
+
+  <!-- ========== Modals ========== -->
+
+  <!-- JQ Query Modal -->
+  <div class="modal" id="jq-modal" style="display: none;">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content jq-modal-content">
+      <div class="modal-header">
+        <h3>JQ Query</h3>
+        <button class="btn btn-icon modal-close" id="jq-modal-close" type="button">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="jq-input-section">
+          <div class="jq-input-row">
+            <span class="jq-prefix">jq</span>
+            <input type="text" id="jq-input" placeholder=".data.users[] | select(.active)">
+            <button class="btn" id="jq-clear" type="button">Clear</button>
+            <button class="btn btn-primary" id="jq-run" type="button">Run</button>
+          </div>
+          <div class="jq-examples">
+            <span class="jq-label">Examples:</span>
+            <button class="jq-example" data-query="." type="button">Identity</button>
+            <button class="jq-example" data-query="keys" type="button">keys</button>
+            <button class="jq-example" data-query=".[]" type="button">Iterate</button>
+            <button class="jq-example" data-query="length" type="button">length</button>
+            <button class="jq-example" data-query=".[0]" type="button">First</button>
+            <button class="jq-example" data-query=".[-1]" type="button">Last</button>
+          </div>
+        </div>
+        <div class="jq-results-section">
+          <div class="jq-results-header">Result</div>
+          <div class="jq-results" id="jq-results">
+            <span class="jq-placeholder">Run a query to see results...</span>
+          </div>
+        </div>
+        <div class="jq-actions">
+          <button class="btn" id="jq-copy-result" type="button">Copy Result</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Import URL Modal — Split Pro "Fetch URL" -->
+  <div class="modal fu-stage" id="import-modal" style="display: none;">
+    <div class="modal-backdrop"></div>
+    <div class="fu-modal" role="dialog" aria-labelledby="fu-title">
+      <!-- Header -->
+      <div class="fu-head">
+        <span class="ico">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M7 9.5a3 3 0 0 0 4.24 0l2-2a3 3 0 0 0-4.24-4.24l-1 1"/>
+            <path d="M9 6.5a3 3 0 0 0-4.24 0l-2 2a3 3 0 0 0 4.24 4.24l1-1"/>
+          </svg>
+        </span>
+        <span class="title" id="fu-title">Fetch URL</span>
+        <span class="badge" id="fu-method-badge">GET</span>
+        <span class="spacer"></span>
+        <button class="close" id="import-modal-close" aria-label="Close" type="button">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 3l6 6M9 3l-6 6"/></svg>
+        </button>
+      </div>
+
+      <!-- Body -->
+      <div class="fu-body">
+        <div class="fu-row" id="fu-row">
+          <button class="fu-method" id="fu-method-btn" type="button">
+            <span id="fu-method-label">GET</span>
+            <svg class="chev" width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2.5 4L5 6.5L7.5 4"/></svg>
+          </button>
+          <input class="fu-url" id="import-url-input" type="url" placeholder="https://api.example.com/data.json" autocomplete="off" />
+          <div class="fu-method-pop" id="fu-method-pop" hidden>
+            <div class="fu-method-item" data-method="GET">GET</div>
+            <div class="fu-method-item" data-method="POST">POST</div>
+            <div class="fu-method-item" data-method="PUT">PUT</div>
+            <div class="fu-method-item" data-method="DELETE">DELETE</div>
+            <div class="fu-method-item" data-method="PATCH">PATCH</div>
+          </div>
+        </div>
+
+        <div class="fu-section">Headers <span class="line"></span></div>
+        <div id="fu-headers"></div>
+        <button class="fu-add" id="fu-add-header" type="button">+ Add header</button>
+
+        <div class="fu-section">Recent <span class="line"></span></div>
+        <div id="fu-recents">
+          <div class="fu-recents-empty">No recent URLs yet.</div>
+        </div>
+      </div>
+
+      <!-- Error strip (shown above footer) -->
+      <div class="fu-error" id="import-error" style="display: none;"></div>
+
+      <!-- Footer -->
+      <div class="fu-foot">
+        <span class="hint">Press <span class="kbd">↵</span> to fetch · <span class="kbd">Esc</span> to close</span>
+        <span class="spacer"></span>
+        <button class="fu-btn" id="import-cancel" type="button">Cancel</button>
+        <button class="fu-btn fu-btn-primary" id="import-fetch" type="button">
+          Fetch <span class="arrow">→</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit raw JSON Modal — Split Pro shell -->
+  <div class="modal fu-stage" id="edit-raw-modal" style="display: none;">
+    <div class="modal-backdrop"></div>
+    <div class="fu-modal er-modal" role="dialog" aria-labelledby="er-title">
+      <div class="fu-head">
+        <span class="ico">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 2.5L13.5 5L5.5 13H3v-2.5z"/></svg>
+        </span>
+        <span class="title" id="er-title">Edit JSON</span>
+        <span class="badge" id="er-size"></span>
+        <span class="spacer"></span>
+        <button class="close" id="edit-raw-close" aria-label="Close" type="button">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 3l6 6M9 3l-6 6"/></svg>
+        </button>
+      </div>
+      <div class="fu-body er-body">
+        <textarea class="er-input" id="edit-raw-input" spellcheck="false" autocomplete="off" wrap="off"></textarea>
+      </div>
+      <div class="fu-error" id="edit-raw-error" style="display: none;"></div>
+      <div class="fu-foot">
+        <span class="hint">Press <span class="kbd">⌘S</span> to save · <span class="kbd">Esc</span> to close</span>
+        <span class="spacer"></span>
+        <button class="fu-btn" id="edit-raw-cancel" type="button">Cancel</button>
+        <button class="fu-btn fu-btn-primary" id="edit-raw-save" type="button">
+          Save <span class="arrow">→</span>
+        </button>
       </div>
     </div>
   </div>
@@ -327,99 +514,18 @@
   <div class="modal" id="edit-modal" style="display: none;">
     <div class="modal-backdrop"></div>
     <div class="modal-content">
-      <div class="modal-header"><h3>Edit Value</h3><button class="btn btn-icon modal-close" id="edit-modal-close">×</button></div>
+      <div class="modal-header"><h3>Edit Value</h3><button class="btn btn-icon modal-close" id="edit-modal-close" type="button">×</button></div>
       <div class="modal-body">
         <label class="modal-label">Key:</label>
         <input type="text" id="edit-key-input" class="modal-input" style="margin-bottom: 12px;">
         <label class="modal-label">Value:</label>
-        <textarea id="edit-value-input" class="modal-input" rows="4" style="resize: vertical; font-family: monospace;"></textarea>
+        <textarea id="edit-value-input" class="modal-input" rows="4" style="resize: vertical; font-family: 'JetBrains Mono', ui-monospace, 'Menlo', monospace;"></textarea>
         <p class="modal-hint">For strings use quotes, for objects/arrays use JSON syntax.</p>
       </div>
       <div class="modal-footer">
-        <button class="btn" id="edit-modal-cancel">Cancel</button>
-        <button class="btn btn-primary" id="edit-modal-save">Save</button>
+        <button class="btn" id="edit-modal-cancel" type="button">Cancel</button>
+        <button class="btn btn-primary" id="edit-modal-save" type="button">Save</button>
       </div>
-    </div>
-  </div>
-
-  <!-- Context Menu -->
-  <div class="context-menu" id="context-menu">
-    <div class="context-menu-section">Copy</div>
-    <div class="context-menu-item" id="ctx-copy-path">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
-      Copy Path <span class="shortcut" id="ctx-path-preview"></span>
-    </div>
-    <div class="context-menu-item has-submenu" id="ctx-copy-path-as">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
-      Copy Path As
-      <span class="submenu-arrow">▶</span>
-      <div class="context-submenu" id="copy-path-submenu">
-        <div class="context-menu-item" id="ctx-path-jsonpath">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
-          JSONPath
-        </div>
-        <div class="context-menu-item" id="ctx-path-jq">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
-          JQ
-        </div>
-        <div class="context-menu-item" id="ctx-path-javascript">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
-          JavaScript
-        </div>
-        <div class="context-menu-item" id="ctx-path-python">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0z" transform="translate(4,4) scale(0.67)"></path><polyline points="4 17 10 11 4 5"></polyline></svg>
-          Python
-        </div>
-      </div>
-    </div>
-    <div class="context-menu-item" id="ctx-copy-key">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path></svg>
-      Copy Key
-    </div>
-    <div class="context-menu-item" id="ctx-copy-value">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
-      Copy Value
-    </div>
-    <div class="context-menu-item" id="ctx-copy-complete">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="4" rx="1"></rect><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path></svg>
-      Copy Complete
-    </div>
-    <div class="context-menu-divider"></div>
-    <div class="context-menu-section">Edit</div>
-    <div class="context-menu-item" id="ctx-edit">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-      Edit Value
-    </div>
-    <div class="context-menu-item" id="ctx-add-key">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
-      Add Key
-    </div>
-    <div class="context-menu-item" id="ctx-delete-key">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-      Delete Key
-    </div>
-    <div class="context-menu-divider"></div>
-    <div class="context-menu-section">Actions</div>
-    <div class="context-menu-item" id="ctx-view-table">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="3" y1="15" x2="21" y2="15"></line><line x1="9" y1="3" x2="9" y2="21"></line></svg>
-      View as Table
-    </div>
-    <div class="context-menu-item" id="ctx-search-google">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-      Search in Google
-    </div>
-    <div class="context-menu-item" id="ctx-highlight-keys">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
-      Highlight Matching Keys
-    </div>
-    <div class="context-menu-item" id="ctx-filter-key">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
-      Filter This Key
-    </div>
-    <div class="context-menu-divider"></div>
-    <div class="context-menu-item" id="ctx-detect-type">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-      Show Data Type <span class="type-indicator" id="ctx-type-badge"></span>
     </div>
   </div>
 
@@ -427,7 +533,7 @@
   <div class="modal" id="add-key-modal" style="display: none;">
     <div class="modal-backdrop"></div>
     <div class="modal-content">
-      <div class="modal-header"><h3>Add New Key</h3><button class="btn btn-icon modal-close" id="add-key-modal-close">×</button></div>
+      <div class="modal-header"><h3>Add New Key</h3><button class="btn btn-icon modal-close" id="add-key-modal-close" type="button">×</button></div>
       <div class="modal-body">
         <label class="modal-label">Key Name:</label>
         <input type="text" id="add-key-name" class="modal-input" placeholder="Enter key name">
@@ -441,25 +547,19 @@
           <option value="array">Array []</option>
         </select>
         <label class="modal-label" id="add-key-value-label" style="margin-top: 12px;">Value:</label>
-        <!-- String input -->
         <input type="text" id="add-key-value-string" class="modal-input add-key-value-input" placeholder="Enter text value">
-        <!-- Number input -->
         <input type="number" id="add-key-value-number" class="modal-input add-key-value-input" placeholder="Enter number" step="any" style="display: none;">
-        <!-- Boolean select -->
         <select id="add-key-value-boolean" class="modal-input add-key-value-input" style="display: none;">
           <option value="true">true</option>
           <option value="false">false</option>
         </select>
-        <!-- Null display -->
         <input type="text" id="add-key-value-null" class="modal-input add-key-value-input" value="null" disabled style="display: none;">
-        <!-- Object display -->
         <input type="text" id="add-key-value-object" class="modal-input add-key-value-input" value="{}" disabled style="display: none;">
-        <!-- Array display -->
         <input type="text" id="add-key-value-array" class="modal-input add-key-value-input" value="[]" disabled style="display: none;">
       </div>
       <div class="modal-footer">
-        <button class="btn" id="add-key-cancel">Cancel</button>
-        <button class="btn btn-primary" id="add-key-confirm">Add Key</button>
+        <button class="btn" id="add-key-cancel" type="button">Cancel</button>
+        <button class="btn btn-primary" id="add-key-confirm" type="button">Add Key</button>
       </div>
     </div>
   </div>
@@ -468,16 +568,118 @@
   <div class="modal" id="delete-key-modal" style="display: none;">
     <div class="modal-backdrop"></div>
     <div class="modal-content">
-      <div class="modal-header"><h3>Delete Key</h3><button class="btn btn-icon modal-close" id="delete-key-modal-close">×</button></div>
+      <div class="modal-header"><h3>Delete Key</h3><button class="btn btn-icon modal-close" id="delete-key-modal-close" type="button">×</button></div>
       <div class="modal-body">
         <p style="margin-bottom: 12px;">Are you sure you want to delete this key?</p>
-        <div class="delete-preview" id="delete-preview" style="background: var(--bg-tertiary); padding: 12px; border-radius: 6px; font-family: monospace; font-size: 13px;"></div>
+        <div class="delete-preview" id="delete-preview"></div>
       </div>
       <div class="modal-footer">
-        <button class="btn" id="delete-key-cancel">Cancel</button>
-        <button class="btn btn-danger" id="delete-key-confirm">Delete</button>
+        <button class="btn" id="delete-key-cancel" type="button">Cancel</button>
+        <button class="btn btn-danger" id="delete-key-confirm" type="button">Delete</button>
       </div>
     </div>
+  </div>
+
+  <!-- Context Menu — Split Pro vocabulary -->
+  <div class="ctx context-menu" id="context-menu" role="menu">
+    <!-- Copy -->
+    <div class="ctx-section">Copy</div>
+    <div class="ctx-item" id="ctx-copy-path">
+      <span class="ico"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h10M3 8h7M3 11h10"/></svg></span>
+      <span class="lbl">Copy path</span>
+      <span class="meta" id="ctx-meta-path"></span>
+    </div>
+    <div class="ctx-item ctx-sub-anchor" id="ctx-copy-path-as">
+      <span class="ico"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4l-3 4 3 4M11 4l3 4-3 4"/></svg></span>
+      <span class="lbl">Copy path as</span>
+      <span class="chev">›</span>
+      <div class="ctx-sub" id="copy-path-submenu">
+        <div class="ctx-item" id="ctx-path-dot">
+          <span class="lbl">Dot notation</span>
+          <span class="meta" id="ctx-meta-dot"></span>
+        </div>
+        <div class="ctx-item" id="ctx-path-bracket">
+          <span class="lbl">Bracket</span>
+          <span class="meta" id="ctx-meta-bracket"></span>
+        </div>
+        <div class="ctx-item" id="ctx-path-pointer">
+          <span class="lbl">JSON Pointer</span>
+          <span class="meta" id="ctx-meta-pointer"></span>
+        </div>
+        <div class="ctx-item" id="ctx-path-jsonpath">
+          <span class="lbl">JSONPath</span>
+          <span class="meta" id="ctx-meta-jsonpath"></span>
+        </div>
+        <div class="ctx-item" id="ctx-path-jq">
+          <span class="lbl">jq filter</span>
+          <span class="meta" id="ctx-meta-jq"></span>
+        </div>
+      </div>
+    </div>
+    <div class="ctx-item" id="ctx-copy-key">
+      <span class="ico"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8h12M2 8l4-4M2 8l4 4"/></svg></span>
+      <span class="lbl">Copy key</span>
+      <span class="meta" id="ctx-meta-key"></span>
+    </div>
+    <div class="ctx-item" id="ctx-copy-value">
+      <span class="ico"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 8H2M14 8l-4-4M14 8l-4 4"/></svg></span>
+      <span class="lbl">Copy value</span>
+      <span class="meta" id="ctx-meta-value"></span>
+    </div>
+    <div class="ctx-item" id="ctx-copy-complete">
+      <span class="ico"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="9" height="9" rx="1.5"/><path d="M11 4V3a1 1 0 00-1-1H4a1 1 0 00-1 1v8a1 1 0 001 1h1"/></svg></span>
+      <span class="lbl">Copy entry</span>
+      <span class="kbd">⌘C</span>
+    </div>
+
+    <div class="ctx-divider"></div>
+
+    <!-- Edit -->
+    <div class="ctx-section">Edit</div>
+    <div class="ctx-item" id="ctx-edit">
+      <span class="ico"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 2l3 3-8 8H3v-3z"/></svg></span>
+      <span class="lbl">Edit value</span>
+      <span class="kbd">⏎</span>
+    </div>
+    <div class="ctx-item" id="ctx-add-key">
+      <span class="ico"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v10M3 8h10"/></svg></span>
+      <span class="lbl" id="ctx-add-key-label">Add key below</span>
+    </div>
+    <div class="ctx-item danger" id="ctx-delete-key">
+      <span class="ico"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h10M6 5V3h4v2M5 5l1 9h4l1-9"/></svg></span>
+      <span class="lbl" id="ctx-delete-label">Delete key</span>
+      <span class="kbd">⌫</span>
+    </div>
+
+    <div class="ctx-divider"></div>
+
+    <!-- Actions -->
+    <div class="ctx-section">Actions</div>
+    <div class="ctx-item" id="ctx-search-google">
+      <span class="ico"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg></span>
+      <span class="lbl">Search Google</span>
+    </div>
+    <div class="ctx-item" id="ctx-highlight-keys">
+      <span class="ico"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="12" height="3" rx="1"/><rect x="2" y="10" width="8" height="3" rx="1"/></svg></span>
+      <span class="lbl">Highlight matching keys</span>
+    </div>
+    <div class="ctx-item" id="ctx-filter-key">
+      <span class="ico"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h12l-4.5 6V14L6.5 12V9z"/></svg></span>
+      <span class="lbl">Filter to this key</span>
+    </div>
+    <div class="ctx-item" id="ctx-detect-type">
+      <span class="ico"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/></svg></span>
+      <span class="lbl">Show data type</span>
+      <span class="badge" id="ctx-type-badge"></span>
+    </div>
+
+    <!-- Hidden compatibility node — old code path-preview reference -->
+    <span id="ctx-path-preview" hidden></span>
+    <!-- Hidden compatibility — JS / Python path conversions removed from menu but kept as no-op IDs -->
+    <span id="ctx-path-javascript" hidden></span>
+    <span id="ctx-path-python" hidden></span>
+    <!-- Hidden compatibility — table action removed from menu -->
+    <span id="ctx-view-table" hidden></span>
   </div>
 
   <!-- Date Tooltip -->

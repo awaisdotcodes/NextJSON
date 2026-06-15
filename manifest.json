@@ -1,13 +1,13 @@
 {
   "manifest_version": 3,
-  "name": "JSON Vision - Best JSON Formatter and JSON Viewer",
-  "version": "3.9.7",
-  "description": "JSON formatter, viewer & editor. Tree view, graph visualization, beautifier, validator, JQ queries, diff tool, dark themes.",
-  "author": "awais.codes",
+  "name": "NextJSON - JSON Parser, Editor, and Formatter",
+  "version": "4.0.1",
+  "description": "Format, edit, and explore JSON — tree view, graph visualization, JQ queries, diff, and URL fetch. Fully local, zero data sent.",
+  "author": "sourcelogs.com",
   "icons": {
-    "16": "icons/icon16.png",
-    "48": "icons/icon48.png",
-    "128": "icons/icon128.png"
+    "16": "icons/logo.png",
+    "48": "icons/logo.png",
+    "128": "icons/logo.png"
   },
   "permissions": [
     "storage"
@@ -21,9 +21,9 @@
   "action": {
     "default_popup": "html/popup.html",
     "default_icon": {
-      "16": "icons/icon16.png",
-      "48": "icons/icon48.png",
-      "128": "icons/icon128.png"
+      "16": "icons/logo.png",
+      "48": "icons/logo.png",
+      "128": "icons/logo.png"
     }
   },
   "content_scripts": [

@@ -1,4 +1,4 @@
-// JSON Vision v3.9.7 - Best JSON Formatter and Validator
+// NextJSON v4.0 - JSON Parser, Formatter, and Viewer
 (function() {
   'use strict';
 
@@ -56,7 +56,7 @@
   let editMode = false;
   let pendingEdits = {};
   let formatDates = false;
-  let currentTheme = 'dark';
+  let currentTheme = 'light';
   let focusedRowIndex = -1;
   let isGraphQL = false;
   let graphqlView = 'all';
@@ -88,25 +88,34 @@
     const saved = localStorage.getItem('sourcetree-theme');
     if (saved) {
       currentTheme = saved;
-    } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
-      currentTheme = 'light';
+    } else {
+      // Default to light unless the user's OS prefers dark
+      currentTheme = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
     }
     applyTheme();
   }
 
   function applyTheme() {
     document.documentElement.setAttribute('data-theme', currentTheme);
-    // Update active state in theme menu
+    // Update active state in legacy theme menu
     document.querySelectorAll('.theme-item').forEach(item => {
       item.classList.toggle('active', item.dataset.theme === currentTheme);
     });
-    // Update theme button: show current theme dot + name
+    // Sync the Split Pro sun/moon segmented control
+    const lightBtn = document.getElementById('theme-light-btn');
+    const darkBtn = document.getElementById('theme-dark-btn');
+    if (lightBtn && darkBtn) {
+      const isLight = currentTheme === 'light';
+      lightBtn.classList.toggle('active', isLight);
+      darkBtn.classList.toggle('active', !isLight);
+    }
+    // Legacy theme button (kept for compatibility — element is hidden)
     const themeLabels = { dark: 'Dark', light: 'Light', monokai: 'Monokai', dracula: 'Dracula', nord: 'Nord', solarized: 'Solarized', github: 'GitHub Dark' };
-    const themeColors = { dark: '#0c0c0d', light: '#f5f5f7', monokai: '#272822', dracula: '#282a36', nord: '#2e3440', solarized: '#002b36', github: '#0d1117' };
+    const themeColors = { dark: '#0f0f12', light: '#fafaf9', monokai: '#272822', dracula: '#282a36', nord: '#2e3440', solarized: '#002b36', github: '#0d1117' };
     const dot = document.querySelector('#theme-btn .theme-btn-dot');
     const label = document.querySelector('#theme-btn .theme-btn-label');
     if (dot) {
-      dot.style.background = themeColors[currentTheme] || '#0c0c0d';
+      dot.style.background = themeColors[currentTheme] || '#0f0f12';
       dot.style.border = currentTheme === 'light' ? '1px solid #aaa' : 'none';
     }
     if (label) label.textContent = themeLabels[currentTheme] || currentTheme;
@@ -207,7 +216,7 @@
       }
       
       // Check if clicked on dropdown item with action
-      const actionItem = e.target.closest('.dropdown-item[data-action]');
+      const actionItem = e.target.closest('.dropdown-item[data-action], .osp-pop-item[data-action]');
       if (actionItem) {
         e.stopPropagation();
         handleDropdownAction(actionItem.dataset.action);
@@ -337,10 +346,11 @@
     document.getElementById('ctx-detect-type')?.addEventListener('click', showDataType);
     
     // Copy path as different formats
+    document.getElementById('ctx-path-dot')?.addEventListener('click', () => copyPathAs('dot'));
+    document.getElementById('ctx-path-bracket')?.addEventListener('click', () => copyPathAs('bracket'));
+    document.getElementById('ctx-path-pointer')?.addEventListener('click', () => copyPathAs('pointer'));
     document.getElementById('ctx-path-jsonpath')?.addEventListener('click', () => copyPathAs('jsonpath'));
     document.getElementById('ctx-path-jq')?.addEventListener('click', () => copyPathAs('jq'));
-    document.getElementById('ctx-path-javascript')?.addEventListener('click', () => copyPathAs('javascript'));
-    document.getElementById('ctx-path-python')?.addEventListener('click', () => copyPathAs('python'));
     
     // Add/Delete key
     document.getElementById('ctx-add-key')?.addEventListener('click', (e) => {
@@ -375,15 +385,21 @@
       hideDropdowns(e);
     });
     
-    // Hide context menu on scroll
+    // Hide context menu on scroll, window blur, or Esc
     document.addEventListener('scroll', hideContextMenu, true);
     window.addEventListener('scroll', hideContextMenu, true);
+    window.addEventListener('blur', hideContextMenu);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && contextMenu && contextMenu.style.display === 'block') {
+        hideContextMenu();
+      }
+    });
     
     // Right-click context menu
     document.addEventListener('contextmenu', handleContextMenu);
     
-    // Dropdown toggles
-    document.querySelectorAll('.dropdown > .btn').forEach(btn => {
+    // Dropdown toggles (matches both legacy .btn and Split Pro .osp-tb-btn toggles)
+    document.querySelectorAll('.dropdown > .btn, .dropdown > .osp-tb-btn.dropdown-toggle').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         const dropdown = btn.parentElement;
@@ -392,6 +408,336 @@
         if (!wasOpen) dropdown.classList.add('open');
       });
     });
+
+    setupSplitProUI();
+  }
+
+  // ============================================
+  // SPLIT PRO UI WIRING
+  // ============================================
+  let wrapOn = true;
+  let sortKeysOn = false;
+  let findPopOpen = false;
+
+  function setupSplitProUI() {
+    // Theme segmented (sun / moon)
+    document.getElementById('theme-light-btn')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      setTheme('light');
+    });
+    document.getElementById('theme-dark-btn')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      setTheme('dark');
+    });
+
+    // View segmented Tree button (Raw is wired through existing #raw-btn handler)
+    document.getElementById('tree-seg-btn')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      switchToTreeView();
+    });
+
+    // Find advanced popover
+    const findPop = document.getElementById('find-popover');
+    const findOptsBtn = document.getElementById('find-opts-btn');
+    findOptsBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      findPopOpen = !findPopOpen;
+      if (findPop) findPop.classList.toggle('open', findPopOpen);
+      updateFindOptsActive();
+    });
+    document.addEventListener('click', (e) => {
+      if (findPopOpen && findPop && !findPop.contains(e.target) && !findOptsBtn.contains(e.target)) {
+        findPopOpen = false;
+        findPop.classList.remove('open');
+      }
+    });
+
+    // Find option items inside popover (toggle hidden checkbox + visual cb)
+    const wireFindOpt = (itemId, cbId, hiddenInputId) => {
+      const item = document.getElementById(itemId);
+      const cb = document.getElementById(cbId);
+      const hidden = document.getElementById(hiddenInputId);
+      item?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const next = !hidden.checked;
+        hidden.checked = next;
+        cb?.classList.toggle('on', next);
+        hidden.dispatchEvent(new Event('change', { bubbles: true }));
+        updateFindOptsActive();
+      });
+    };
+    wireFindOpt('find-opt-keys', 'search-keys-cb', 'search-keys');
+    wireFindOpt('find-opt-values', 'search-values-cb', 'search-values');
+    wireFindOpt('find-opt-case', 'search-case-cb', 'search-case');
+
+    // JQ quick-input inside find popover — open full panel on Enter
+    document.getElementById('jq-quick-input')?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const v = e.target.value.trim();
+        if (v) {
+          const fullJq = document.getElementById('jq-input');
+          if (fullJq) fullJq.value = v;
+        }
+        findPopOpen = false;
+        findPop?.classList.remove('open');
+        openJqModal();
+      }
+    });
+
+    // Wrap toggle (raw view word-wrap)
+    const wrapItem = document.getElementById('more-wrap');
+    const wrapCb = document.getElementById('wrap-cb');
+    wrapItem?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      wrapOn = !wrapOn;
+      wrapCb.classList.toggle('on', wrapOn);
+      wrapCb.innerHTML = wrapOn ? '<svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 5.2L4 7.2L8 3"/></svg>' : '';
+      const rc = document.getElementById('raw-container');
+      if (rc) rc.classList.toggle('no-wrap', !wrapOn);
+    });
+
+    // Sort keys toggle (visual only — alphabetizes object keys via re-render)
+    const sortItem = document.getElementById('more-sort-keys');
+    const sortCb = document.getElementById('sort-keys-cb');
+    sortItem?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      sortKeysOn = !sortKeysOn;
+      sortCb.classList.toggle('on', sortKeysOn);
+      sortCb.innerHTML = sortKeysOn ? '<svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 5.2L4 7.2L8 3"/></svg>' : '';
+      // Apply sort by reordering jsonData (in-place is risky — mutate a working copy)
+      if (typeof jsonData === 'object' && jsonData !== null) {
+        try {
+          const sorted = sortKeysOn ? sortKeysDeep(originalJsonData || jsonData) : (originalJsonData || jsonData);
+          if (!originalJsonData) originalJsonData = JSON.parse(JSON.stringify(jsonData));
+          jsonData = sorted;
+          renderJson(false);
+        } catch (_) {}
+      }
+    });
+
+    // Hits count display in find input
+    const searchHitsEl = document.getElementById('search-hits');
+    const updateHits = () => {
+      if (!searchHitsEl) return;
+      if (searchInput.value.trim() && searchMatches.length > 0) {
+        searchHitsEl.textContent = searchMatches.length;
+        searchHitsEl.style.display = '';
+      } else {
+        searchHitsEl.textContent = '';
+        searchHitsEl.style.display = 'none';
+      }
+    };
+    searchInput?.addEventListener('input', () => setTimeout(updateHits, 240));
+    document.addEventListener('search-updated', updateHits);
+
+    // Update copy/export button label after copy
+    const copyBtnLabel = document.getElementById('copy-btn-label');
+    document.addEventListener('copy-flash', () => {
+      if (copyBtnLabel) {
+        copyBtnLabel.textContent = 'Copied';
+        setTimeout(() => { copyBtnLabel.textContent = 'Copy'; }, 1400);
+      }
+    });
+
+    // Mark active view in More menu
+    syncMoreMenuActive();
+
+    // Wire the Fetch URL modal interactions
+    setupFetchUrlModalUI();
+    // Wire the Edit raw JSON modal
+    setupEditRawModalUI();
+  }
+
+  // ============================================
+  // EDIT RAW JSON MODAL
+  // ============================================
+  function setupEditRawModalUI() {
+    const modal = document.getElementById('edit-raw-modal');
+    const input = document.getElementById('edit-raw-input');
+    const errorEl = document.getElementById('edit-raw-error');
+    const sizeBadge = document.getElementById('er-size');
+    const openBtn = document.getElementById('edit-raw-btn');
+    const closeBtn = document.getElementById('edit-raw-close');
+    const cancelBtn = document.getElementById('edit-raw-cancel');
+    const saveBtn = document.getElementById('edit-raw-save');
+    if (!modal || !input || !openBtn || !saveBtn) return;
+
+    const show = () => {
+      if (jsonData == null) { showToast('No JSON loaded'); return; }
+      try {
+        const formatted = JSON.stringify(jsonData, null, 2);
+        input.value = formatted;
+        if (sizeBadge) sizeBadge.textContent = humanBytes(byteLength(formatted));
+        errorEl.style.display = 'none';
+        modal.style.display = 'flex';
+        setTimeout(() => { input.focus(); input.setSelectionRange(0, 0); input.scrollTop = 0; }, 0);
+      } catch (e) { showToast('Failed to load JSON for editing'); }
+    };
+    const hide = () => { modal.style.display = 'none'; errorEl.style.display = 'none'; };
+
+    const save = () => {
+      const text = input.value;
+      let parsed;
+      try { parsed = JSON.parse(text); }
+      catch (e) {
+        errorEl.textContent = e.message;
+        errorEl.style.display = 'block';
+        return;
+      }
+      // Diff old vs new BEFORE swapping jsonData so we know which
+      // paths the user touched and can expand only those.
+      const changedPaths = diffJsonPaths(jsonData, parsed);
+
+      // Push the prior JSON onto the undo stack BEFORE we mutate it.
+      saveUndoState();
+
+      // Capture currently-collapsed paths so we can restore them after
+      // re-render (otherwise the tree would be fully expanded).
+      const collapsedBefore = new Set();
+      jsonOutput.querySelectorAll('.json-row.expandable.collapsed').forEach(r => {
+        if (r.dataset.path) collapsedBefore.add(r.dataset.path);
+      });
+
+      jsonData = parsed;
+      originalJsonData = JSON.parse(JSON.stringify(parsed));
+      rawJson = JSON.stringify(parsed, null, 2);
+      renderJson(false);
+      updateStats();
+      const rawOut = document.getElementById('raw-output');
+      if (rawOut) rawOut.textContent = rawJson;
+      // Reflect the new undo history in the toolbar buttons.
+      updateUndoRedoButtons();
+
+      // Re-collapse anything that was collapsed before, EXCEPT
+      // ancestors of paths the user just changed (those should
+      // remain open so the new value is visible).
+      const ancestorsOfChanges = new Set();
+      changedPaths.forEach(p => {
+        ancestorsOf(p).forEach(a => ancestorsOfChanges.add(a));
+      });
+      jsonOutput.querySelectorAll('.json-row.expandable').forEach(row => {
+        const p = row.dataset.path || '';
+        if (collapsedBefore.has(p) && !ancestorsOfChanges.has(p)) {
+          collapseRow(row);
+        }
+      });
+
+      hide();
+      showToast(changedPaths.length ? 'JSON updated' : 'No changes');
+    };
+
+    // Helpers scoped here so they capture the modal's variables but
+    // can also be reused by other parts of the file via the closure.
+    function collapseRow(row) {
+      row.classList.add('collapsed');
+      let next = row.nextElementSibling;
+      if (next?.classList.contains('json-children')) { next.classList.add('collapsed'); next = next.nextElementSibling; }
+      if (next?.classList.contains('bracket-close')) next.classList.add('collapsed');
+    }
+
+    openBtn.addEventListener('click', show);
+    closeBtn?.addEventListener('click', hide);
+    cancelBtn?.addEventListener('click', hide);
+    saveBtn.addEventListener('click', save);
+    modal.querySelector('.modal-backdrop')?.addEventListener('click', hide);
+
+    input.addEventListener('input', () => {
+      // Hide stale error as the user edits.
+      if (errorEl.style.display === 'block') errorEl.style.display = 'none';
+      if (sizeBadge) sizeBadge.textContent = humanBytes(byteLength(input.value));
+    });
+    input.addEventListener('keydown', (e) => {
+      // ⌘S / Ctrl+S → save
+      if ((e.metaKey || e.ctrlKey) && (e.key === 's' || e.key === 'S')) {
+        e.preventDefault();
+        save();
+        return;
+      }
+      // Tab inserts two spaces instead of changing focus.
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        const start = input.selectionStart;
+        const end = input.selectionEnd;
+        input.value = input.value.slice(0, start) + '  ' + input.value.slice(end);
+        input.selectionStart = input.selectionEnd = start + 2;
+        return;
+      }
+      // Enter → preserve current line's indentation, plus an extra
+      // indent level if the previous non-space char was '{' or '['.
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        const start = input.selectionStart;
+        const end = input.selectionEnd;
+        const value = input.value;
+        // Find the start of the current line.
+        const lineStart = value.lastIndexOf('\n', start - 1) + 1;
+        const currentLine = value.slice(lineStart, start);
+        const indentMatch = currentLine.match(/^[ \t]*/);
+        let indent = indentMatch ? indentMatch[0] : '';
+        // Look at the last non-whitespace char before the cursor to
+        // decide whether to add an extra indent step.
+        let i = start - 1;
+        while (i >= 0 && /\s/.test(value[i])) i--;
+        const prev = i >= 0 ? value[i] : '';
+        if (prev === '{' || prev === '[') indent += '  ';
+        // Also: if the next char is the matching closer, push it down a line.
+        const nextCh = value[end] || '';
+        let insert = '\n' + indent;
+        let cursorOffset = insert.length;
+        if ((prev === '{' && nextCh === '}') || (prev === '[' && nextCh === ']')) {
+          insert += '\n' + indent.slice(2);
+        }
+        input.value = value.slice(0, start) + insert + value.slice(end);
+        input.selectionStart = input.selectionEnd = start + cursorOffset;
+        return;
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && modal.style.display !== 'none') {
+        e.preventDefault();
+        hide();
+      }
+    });
+  }
+
+  function updateFindOptsActive() {
+    const btn = document.getElementById('find-opts-btn');
+    if (!btn) return;
+    const k = document.getElementById('search-keys')?.checked;
+    const v = document.getElementById('search-values')?.checked;
+    const c = document.getElementById('search-case')?.checked;
+    const jq = document.getElementById('jq-quick-input')?.value;
+    const active = (k === false) || (v === false) || c || (jq && jq.trim());
+    btn.classList.toggle('on', !!active);
+  }
+
+  function switchToTreeView() {
+    if (typeof switchView === 'function') {
+      switchView('tree');
+    }
+    document.getElementById('tree-seg-btn')?.classList.add('active');
+    document.getElementById('raw-btn')?.classList.remove('active');
+    syncMoreMenuActive();
+  }
+
+  function syncMoreMenuActive() {
+    const v = currentView || 'tree';
+    document.querySelectorAll('.osp-pop-item[data-view-target]').forEach(item => {
+      item.classList.toggle('is-active', item.getAttribute('data-view-target') === v);
+    });
+    document.getElementById('tree-seg-btn')?.classList.toggle('active', v === 'tree');
+    document.getElementById('raw-btn')?.classList.toggle('active', v === 'raw');
+  }
+
+  function sortKeysDeep(v) {
+    if (Array.isArray(v)) return v.map(sortKeysDeep);
+    if (v && typeof v === 'object') {
+      const out = {};
+      Object.keys(v).sort().forEach(k => { out[k] = sortKeysDeep(v[k]); });
+      return out;
+    }
+    return v;
   }
 
   // ============================================
@@ -553,7 +899,7 @@
         // No JSON in storage - show helpful message
         loading.innerHTML = `
           <div class="empty-state-content">
-            <img src="../icons/logo.png" alt="JSON Vision" class="empty-state-logo">
+            <img src="../icons/logo.png" alt="NextJSON" class="empty-state-logo">
             <h2 class="empty-state-title">No JSON loaded</h2>
             <p class="empty-state-desc">Navigate to any <code>.json</code> URL or API endpoint<br>and it will be formatted here automatically.</p>
             <div class="empty-state-hints">
@@ -598,16 +944,26 @@
         if (closingBracket && closingBracket.classList.contains('bracket-close')) {
           closingBracket.classList.toggle('collapsed');
         }
-        
-        // Update toggle arrow
-        el.textContent = row.classList.contains('collapsed') ? '▶' : '▼';
+        // CSS rotates the chevron based on .collapsed class — no textContent swap needed
       });
     });
     
     jsonOutput.querySelectorAll('.json-row').forEach(row => {
       row.addEventListener('click', (e) => {
-        if (e.target.classList.contains('toggle')) return;
+        // The .toggle SVG path forwards its click to the toggle handler
+        // attached above; ignore here so we don't double-fire.
+        if (e.target.closest('.toggle')) return;
+        // Don't trigger expand on link clicks or while user is selecting.
+        if (e.target.tagName === 'A') return;
+        if (window.getSelection && window.getSelection().toString()) return;
+
+        // Click anywhere on an expandable row toggles it. Always select
+        // the row so the breadcrumb / context-menu state stays in sync.
         selectRow(row);
+        if (row.classList.contains('expandable')) {
+          const toggle = row.querySelector('.toggle');
+          if (toggle) toggle.click();
+        }
       });
     });
     
@@ -643,14 +999,11 @@
           if (closingBracket && closingBracket.classList.contains('bracket-close')) {
             closingBracket.classList.add('collapsed');
           }
-          if (toggle) {
-            toggle.textContent = '▶';
-          }
         }
       }
     });
   }
-  
+
   function renderJsonPreserveState() {
     // Save collapsed state before re-rendering
     const collapsedPaths = new Set();
@@ -665,19 +1018,15 @@
     jsonOutput.querySelectorAll('.json-row.expandable').forEach(row => {
       const path = row.dataset.path;
       if (collapsedPaths.has(path)) {
-        const toggle = row.querySelector('.toggle');
         const children = row.nextElementSibling;
         const closingBracket = children?.nextElementSibling;
-        
+
         row.classList.add('collapsed');
         if (children && children.classList.contains('json-children')) {
           children.classList.add('collapsed');
         }
         if (closingBracket && closingBracket.classList.contains('bracket-close')) {
           closingBracket.classList.add('collapsed');
-        }
-        if (toggle) {
-          toggle.textContent = '▶';
         }
       }
     });
@@ -698,7 +1047,7 @@
       const count = isArray ? value.length : entries.length;
       
       html += `<div class="json-row expandable" data-path="${pathStr}" data-key="${key}" data-type="${type}" style="padding-left:${indent}px">`;
-      html += `<span class="toggle">▼</span>`;
+      html += `<span class="toggle"><svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2 1.5L6 4.5L2 7.5"/></svg></span>`;
       if (key !== null && key !== undefined && key !== '') {
         if (typeof key === 'number') {
           html += `<span class="index">${key}</span><span class="colon">: </span>`;
@@ -724,9 +1073,10 @@
       }
       
       html += `</div>`;
-      html += `<div class="json-row bracket-close" style="padding-left:${indent}px"><span class="bracket">${closeBracket}${comma}</span></div>`;
+      html += `<div class="json-row bracket-close" style="padding-left:${indent}px"><span class="toggle-empty"></span><span class="bracket">${closeBracket}${comma}</span></div>`;
     } else {
       html += `<div class="json-row" data-path="${pathStr}" data-key="${key}" data-type="${type}" style="padding-left:${indent}px">`;
+      html += `<span class="toggle-empty"></span>`;
       if (key !== null && key !== undefined && key !== '') {
         if (typeof key === 'number') {
           html += `<span class="index">${key}</span><span class="colon">: </span>`;
@@ -1113,73 +1463,251 @@
   // ============================================
   // IMPORT FROM URL
   // ============================================
+  // ============================================
+  // FETCH URL MODAL — Split Pro
+  // ============================================
+  let fuMethod = 'GET';
+  let fuRecents = [];
+
   function showImportModal() {
     importModal.style.display = 'flex';
-    document.getElementById('import-url-input').focus();
-    // Clear any previous error
+    // Reset error
     const errorEl = document.getElementById('import-error');
     if (errorEl) errorEl.style.display = 'none';
+    // Restore Fetch button label
+    resetFetchBtn();
+    // Ensure at least one header row exists
+    const list = document.getElementById('fu-headers');
+    if (list && list.children.length === 0) {
+      addHeaderRow('Accept', 'application/json');
+    }
+    // Render recent URLs
+    renderRecents();
+    // Focus URL input
+    setTimeout(() => document.getElementById('import-url-input')?.focus(), 0);
   }
 
   function hideImportModal() {
     importModal.style.display = 'none';
     document.getElementById('import-url-input').value = '';
-    // Clear error
     const errorEl = document.getElementById('import-error');
     if (errorEl) errorEl.style.display = 'none';
+    // Close method picker if open
+    document.getElementById('fu-method-pop')?.setAttribute('hidden', '');
+    resetFetchBtn();
+  }
+
+  function resetFetchBtn() {
+    const btn = document.getElementById('import-fetch');
+    if (!btn) return;
+    btn.disabled = false;
+    btn.innerHTML = 'Fetch <span class="arrow">→</span>';
+  }
+
+  function setFuMethod(m) {
+    fuMethod = m;
+    const label = document.getElementById('fu-method-label');
+    const badge = document.getElementById('fu-method-badge');
+    if (label) label.textContent = m;
+    if (badge) badge.textContent = m;
+  }
+
+  function getCurrentHeaders() {
+    const list = document.getElementById('fu-headers');
+    if (!list) return {};
+    const headers = {};
+    list.querySelectorAll('.fu-kv').forEach(row => {
+      const k = row.querySelector('.k')?.value.trim();
+      const v = row.querySelector('.v')?.value.trim();
+      if (k) headers[k] = v || '';
+    });
+    return headers;
+  }
+
+  function addHeaderRow(key = '', value = '') {
+    const list = document.getElementById('fu-headers');
+    if (!list) return;
+    const row = document.createElement('div');
+    row.className = 'fu-kv';
+    row.innerHTML = `
+      <input class="k" type="text" placeholder="Header" value="${escapeHtml(key)}">
+      <input class="v" type="text" placeholder="Value" value="${escapeHtml(value)}">
+      <button class="x" type="button" aria-label="Remove">
+        <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2.5 2.5L8.5 8.5M8.5 2.5L2.5 8.5"/></svg>
+      </button>
+    `;
+    row.querySelector('.x').addEventListener('click', () => row.remove());
+    list.appendChild(row);
+  }
+
+  function loadRecents(cb) {
+    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+      chrome.storage.local.get(['fu_recents'], (res) => {
+        fuRecents = Array.isArray(res.fu_recents) ? res.fu_recents : [];
+        cb && cb();
+      });
+    } else {
+      try {
+        fuRecents = JSON.parse(localStorage.getItem('fu_recents') || '[]');
+      } catch (_) { fuRecents = []; }
+      cb && cb();
+    }
+  }
+
+  function saveRecents() {
+    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+      chrome.storage.local.set({ fu_recents: fuRecents });
+    } else {
+      try { localStorage.setItem('fu_recents', JSON.stringify(fuRecents)); } catch (_) {}
+    }
+  }
+
+  function pushRecent(url, method) {
+    fuRecents = [{ url, method, ts: Date.now() }, ...fuRecents.filter(r => r.url !== url)].slice(0, 5);
+    saveRecents();
+  }
+
+  function relativeTime(ts) {
+    const s = Math.max(1, Math.floor((Date.now() - ts) / 1000));
+    if (s < 60) return 'just now';
+    const m = Math.floor(s / 60);
+    if (m < 60) return m + 'm ago';
+    const h = Math.floor(m / 60);
+    if (h < 24) return h + 'h ago';
+    const d = Math.floor(h / 24);
+    if (d === 1) return 'yesterday';
+    if (d < 7) return d + 'd ago';
+    return new Date(ts).toLocaleDateString();
+  }
+
+  function renderRecents() {
+    const wrap = document.getElementById('fu-recents');
+    if (!wrap) return;
+    loadRecents(() => {
+      if (!fuRecents.length) {
+        wrap.innerHTML = '<div class="fu-recents-empty">No recent URLs yet.</div>';
+        return;
+      }
+      wrap.innerHTML = fuRecents.map(r => `
+        <div class="fu-recent" data-url="${escapeHtml(r.url)}" data-method="${escapeHtml(r.method || 'GET')}">
+          <span class="ico"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 9.5a3 3 0 0 0 4.24 0l2-2a3 3 0 0 0-4.24-4.24l-1 1"/><path d="M9 6.5a3 3 0 0 0-4.24 0l-2 2a3 3 0 0 0 4.24 4.24l1-1"/></svg></span>
+          <span class="url">${escapeHtml(r.url)}</span>
+          <span class="ago">${escapeHtml(relativeTime(r.ts || Date.now()))}</span>
+        </div>
+      `).join('');
+      wrap.querySelectorAll('.fu-recent').forEach(el => {
+        el.addEventListener('click', () => {
+          const url = el.dataset.url;
+          const method = el.dataset.method || 'GET';
+          const input = document.getElementById('import-url-input');
+          if (input) input.value = url;
+          setFuMethod(method);
+          input?.focus();
+        });
+      });
+    });
   }
 
   function fetchFromUrl() {
     const url = document.getElementById('import-url-input').value.trim();
     const errorEl = document.getElementById('import-error');
     const fetchBtn = document.getElementById('import-fetch');
-    
-    // Hide any previous error
-    errorEl.style.display = 'none';
-    
+
+    if (errorEl) errorEl.style.display = 'none';
+
     if (!url) {
-      errorEl.textContent = 'Please enter a URL';
-      errorEl.style.display = 'flex';
+      if (errorEl) {
+        errorEl.textContent = 'Please enter a URL';
+        errorEl.style.display = 'block';
+      }
       return;
     }
-    
-    // Validate URL format
-    try {
-      new URL(url);
-    } catch (e) {
-      errorEl.textContent = 'Invalid URL format. Please enter a valid URL.';
-      errorEl.style.display = 'flex';
+
+    try { new URL(url); }
+    catch (e) {
+      if (errorEl) {
+        errorEl.textContent = 'Invalid URL format. Please enter a valid URL.';
+        errorEl.style.display = 'block';
+      }
       return;
     }
-    
-    // Show loading state
-    fetchBtn.textContent = 'Fetching...';
+
+    // Loading state — disable + label
     fetchBtn.disabled = true;
-    
-    // Use background script to bypass CORS
-    chrome.runtime.sendMessage({ type: 'FETCH_URL', url }, (response) => {
-      // Reset button state
-      fetchBtn.textContent = 'Fetch JSON';
-      fetchBtn.disabled = false;
-      
+    fetchBtn.innerHTML = 'Fetching… <span class="arrow">→</span>';
+
+    const headers = getCurrentHeaders();
+
+    chrome.runtime.sendMessage({ type: 'FETCH_URL', url, method: fuMethod, headers }, (response) => {
+      resetFetchBtn();
+
       if (response && response.success) {
         try {
           jsonData = JSON.parse(response.data);
           originalJsonData = JSON.parse(response.data);
           rawJson = response.data;
           sourceUrl = url;
-          renderJson(true); // Initial load - collapse all except first level
+          pushRecent(url, fuMethod);
+          renderJson(true);
           updateStats();
           hideImportModal();
           showToast('JSON loaded successfully!');
         } catch (e) {
-          errorEl.textContent = 'Failed to parse response as JSON: ' + e.message;
-          errorEl.style.display = 'flex';
+          if (errorEl) {
+            errorEl.textContent = 'Failed to parse response as JSON: ' + e.message;
+            errorEl.style.display = 'block';
+          }
         }
       } else {
         const errorMsg = response?.error || 'Failed to fetch data from this URL';
-        errorEl.textContent = errorMsg;
-        errorEl.style.display = 'flex';
+        if (errorEl) {
+          errorEl.textContent = errorMsg;
+          errorEl.style.display = 'block';
+        }
+      }
+    });
+  }
+
+  function setupFetchUrlModalUI() {
+    const methodBtn = document.getElementById('fu-method-btn');
+    const methodPop = document.getElementById('fu-method-pop');
+    methodBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!methodPop) return;
+      methodPop.toggleAttribute('hidden');
+    });
+    methodPop?.querySelectorAll('.fu-method-item').forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.stopPropagation();
+        setFuMethod(item.dataset.method);
+        methodPop.setAttribute('hidden', '');
+      });
+    });
+    document.addEventListener('click', (e) => {
+      if (methodPop && !methodPop.hasAttribute('hidden')) {
+        if (!methodPop.contains(e.target) && e.target !== methodBtn && !methodBtn?.contains(e.target)) {
+          methodPop.setAttribute('hidden', '');
+        }
+      }
+    });
+
+    document.getElementById('fu-add-header')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      addHeaderRow();
+    });
+
+    // Enter in URL input → fetch
+    document.getElementById('import-url-input')?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        fetchFromUrl();
+      }
+    });
+
+    // Esc closes modal when open
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && importModal && importModal.style.display !== 'none') {
+        hideImportModal();
       }
     });
   }
@@ -1617,9 +2145,13 @@
     uiContainer.style.display = v === 'ui' ? 'flex' : 'none';
     tableViewContainer.style.display = v === 'table' ? 'flex' : 'none';
 
-    // Update active view button highlight
+    // Update active view button highlight. Clear .active off both the
+    // legacy .btn-view elements AND the Split Pro More-menu items that
+    // share their IDs, otherwise switching views would let each click
+    // accumulate an .active class on the previous item.
     const viewBtnMap = { raw: 'raw-btn', diff: 'compare-btn', graph: 'graph-btn', ui: 'ui-btn', table: 'table-btn' };
     document.querySelectorAll('.btn-view').forEach(b => b.classList.remove('active'));
+    Object.values(viewBtnMap).forEach(id => document.getElementById(id)?.classList.remove('active'));
     if (viewBtnMap[v]) document.getElementById(viewBtnMap[v])?.classList.add('active');
 
     // Hide search bar for views that don't use it
@@ -1636,16 +2168,15 @@
     if (v === 'graph') renderGraphView();
     if (v === 'ui') renderUIView();
     if (v === 'table') renderTableView();
+
+    // Sync Split Pro active markers (Tree/Raw segmented + More menu)
+    if (typeof syncMoreMenuActive === 'function') syncMoreMenuActive();
   }
 
   function toggleRawView() {
-    const newView = currentView === 'raw' ? 'tree' : 'raw';
-    switchView(newView);
-    // Update button text
-    const btnText = document.getElementById('raw-btn-text');
-    if (btnText) {
-      btnText.textContent = newView === 'raw' ? 'Prettify' : 'Raw';
-    }
+    // In Split Pro segmented mode, Raw always switches to raw view
+    // (Tree segmented switches back to tree)
+    switchView('raw');
   }
 
   function toggleCompareView() {
@@ -1874,7 +2405,7 @@
       const row = document.querySelector(`.json-row[data-path="${CSS.escape(buildPath)}"]`);
       if (row) {
         const toggle = row.querySelector('.toggle');
-        if (toggle && toggle.textContent === '▶') {
+        if (toggle && row.classList.contains('collapsed')) {
           toggle.click();
         }
       }
@@ -1997,6 +2528,15 @@
 
   function exportJSON() {
     downloadFile(JSON.stringify(jsonData, null, 2), 'export_json.json', 'application/json');
+  }
+
+  function exportMinifiedJSON() {
+    downloadFile(JSON.stringify(jsonData), 'export_min.json', 'application/json');
+  }
+
+  function copyCurrentPath() {
+    const p = selectedPath || 'root';
+    navigator.clipboard.writeText(p).then(() => showToast('✓ Copied path: ' + p));
   }
 
   function exportCSV() {
@@ -2300,71 +2840,79 @@
   function handleContextMenu(e) {
     const row = e.target.closest('.json-row');
     if (!row || !jsonContainer.contains(row)) return;
-    
+
     e.preventDefault();
     selectRow(row);
+
+    // Mark only the right-clicked row so the user can see what the
+    // open context menu refers to. Always clear other rows first to
+    // prevent multiple highlights from accumulating.
+    document.querySelectorAll('.json-row.context-active').forEach(r => r.classList.remove('context-active'));
+    row.classList.add('context-active');
     
-    // Update path preview
-    const pathPreview = document.getElementById('ctx-path-preview');
-    if (pathPreview) pathPreview.textContent = selectedPath || 'root';
-    
-    // Update type badge
+    // ── Live preview text in the meta column for each item ──
+    const setText = (id, txt) => { const el = document.getElementById(id); if (el) { el.textContent = txt; el.title = txt; } };
+    const dotPath = selectedPath || 'root';
+    setText('ctx-meta-path', dotPath);
+
+    // Key preview ("email") — only show when this row has a string key
+    const isArrayElement = /\[\d+\]$/.test(selectedPath || '');
+    const showKey = !!selectedKey && !isArrayElement;
+    setText('ctx-meta-key', showKey ? `"${selectedKey}"` : '—');
+
+    // Value preview — truncated at 24 chars with ellipsis
+    setText('ctx-meta-value', formatValuePreview(selectedValue, selectedType));
+
+    // Submenu live previews
+    setText('ctx-meta-dot', convertToDotPath(selectedPath));
+    setText('ctx-meta-bracket', convertToBracket(selectedPath));
+    setText('ctx-meta-pointer', convertToJSONPointer(selectedPath));
+    setText('ctx-meta-jsonpath', convertToJSONPath(selectedPath));
+    setText('ctx-meta-jq', convertToJQ(selectedPath));
+
+    // Type badge: text + color class
     const typeBadge = document.getElementById('ctx-type-badge');
     if (typeBadge) {
-      typeBadge.textContent = selectedType;
-      typeBadge.className = `type-indicator type-${selectedType}`;
+      typeBadge.textContent = selectedType || '—';
+      typeBadge.className = `badge t-${selectedType}`;
     }
     
-    // Show/hide table option
-    const tableOption = document.getElementById('ctx-view-table');
-    if (tableOption) {
-      tableOption.style.display = Array.isArray(selectedValue) ? 'flex' : 'none';
-    }
-    
-    // Update Add Key option - always show, will add to parent object/array
+    // Add key — context-aware label (sibling vs inside, key vs item)
     const addKeyOption = document.getElementById('ctx-add-key');
-    if (addKeyOption) {
-      // Determine if we're on an object/array or a child of one
+    const addKeyLabel = document.getElementById('ctx-add-key-label');
+    if (addKeyOption && addKeyLabel) {
       const isContainer = selectedType === 'object' || selectedType === 'array';
       addKeyOption.style.display = 'flex';
-      
-      if (isContainer) {
-        // Clicking on object/array - add inside it
-        addKeyOption.innerHTML = selectedType === 'array' 
-          ? '<span>➕</span> Add Item Inside' 
-          : '<span>➕</span> Add Key Inside';
-      } else {
-        // Clicking on a value - add sibling below it
-        addKeyOption.innerHTML = '<span>➕</span> Add Key Below';
-      }
+      addKeyLabel.textContent = isContainer
+        ? (selectedType === 'array' ? 'Add item inside' : 'Add key inside')
+        : (isArrayElement ? 'Add item below' : 'Add key below');
     }
-    
-    // Update Delete option - change text based on type
+
+    // Delete — hidden at root; danger styling lives in the .ctx-item.danger class
     const deleteKeyOption = document.getElementById('ctx-delete-key');
-    if (deleteKeyOption) {
+    const deleteLabel = document.getElementById('ctx-delete-label');
+    if (deleteKeyOption && deleteLabel) {
       if (!selectedPath || selectedPath === 'root') {
         deleteKeyOption.style.display = 'none';
       } else {
         deleteKeyOption.style.display = 'flex';
-        if (selectedType === 'object') {
-          deleteKeyOption.innerHTML = '<span>🗑️</span> Delete Object';
-        } else if (selectedType === 'array') {
-          deleteKeyOption.innerHTML = '<span>🗑️</span> Delete Array';
-        } else {
-          deleteKeyOption.innerHTML = '<span>🗑️</span> Delete Key';
-        }
+        deleteLabel.textContent = selectedType === 'object'
+          ? 'Delete object'
+          : selectedType === 'array'
+            ? 'Delete array'
+            : (isArrayElement ? 'Delete item' : 'Delete key');
       }
     }
-    
-    // Update Edit option - only for primitive values
+
+    // Edit value — only for primitives
     const editOption = document.getElementById('ctx-edit');
     if (editOption) {
-      if (selectedType === 'object' || selectedType === 'array') {
-        editOption.style.display = 'none';
-      } else {
-        editOption.style.display = 'flex';
-      }
+      editOption.style.display = (selectedType === 'object' || selectedType === 'array') ? 'none' : 'flex';
     }
+
+    // Copy key — hide for array elements (no string key)
+    const copyKey = document.getElementById('ctx-copy-key');
+    if (copyKey) copyKey.style.display = showKey ? 'flex' : 'none';
     
     contextMenu.style.display = 'block';
     
@@ -2395,10 +2943,20 @@
     contextMenu.style.position = 'fixed';
     contextMenu.style.left = posX + 'px';
     contextMenu.style.top = posY + 'px';
+
+    // If there's not enough room to the right of the menu for the 200px
+    // submenu, flip it to the left side.
+    const subAnchor = contextMenu.querySelector('.ctx-sub-anchor');
+    if (subAnchor) {
+      const SUB_WIDTH = 206; // 200 + 6 gap
+      const fitsRight = (posX + contextMenu.offsetWidth + SUB_WIDTH) <= viewportWidth;
+      subAnchor.classList.toggle('flip-left', !fitsRight);
+    }
   }
 
   function hideContextMenu() {
     contextMenu.style.display = 'none';
+    document.querySelectorAll('.json-row.context-active').forEach(r => r.classList.remove('context-active'));
   }
 
   function selectRow(row) {
@@ -2527,48 +3085,30 @@
   // ============================================
   // COPY COMPLETE OBJECT/ARRAY
   // ============================================
+  // "Copy entry" — emits `"key": value` for object members,
+  // bare `value` for array elements, and the full JSON for root.
   function copyComplete() {
     hideContextMenu();
-    
-    // Get the complete value at selected path
+
     let valueToCopy;
     if (!selectedPath || selectedPath === 'root') {
       valueToCopy = jsonData;
     } else {
       valueToCopy = getValueAtPath(jsonData, selectedPath);
     }
-    
-    if (valueToCopy === undefined) {
-      showToast('Nothing to copy');
-      return;
-    }
-    
-    // Format based on type
+    if (valueToCopy === undefined) { showToast('Nothing to copy'); return; }
+
+    const isArrayElement = /\[\d+\]$/.test(selectedPath || '');
+    const isRoot = !selectedPath || selectedPath === 'root';
+    const valueText = JSON.stringify(valueToCopy, null, 2);
+
     let copyText;
-    if (typeof valueToCopy === 'object' && valueToCopy !== null) {
-      // For objects and arrays, include the key if it exists
-      if (selectedKey && selectedPath !== 'root') {
-        const wrapper = {};
-        wrapper[selectedKey] = valueToCopy;
-        copyText = JSON.stringify(wrapper, null, 2);
-      } else {
-        copyText = JSON.stringify(valueToCopy, null, 2);
-      }
-    } else {
-      // For primitives, include the key
-      if (selectedKey) {
-        const wrapper = {};
-        wrapper[selectedKey] = valueToCopy;
-        copyText = JSON.stringify(wrapper, null, 2);
-      } else {
-        copyText = JSON.stringify(valueToCopy);
-      }
-    }
-    
-    navigator.clipboard.writeText(copyText).then(() => {
-      const type = Array.isArray(valueToCopy) ? 'array' : typeof valueToCopy;
-      showToast(`Copied ${type} to clipboard`);
-    });
+    if (isRoot) copyText = valueText;
+    else if (isArrayElement) copyText = valueText;
+    else if (selectedKey) copyText = `"${selectedKey}": ${valueText}`;
+    else copyText = valueText;
+
+    navigator.clipboard.writeText(copyText).then(() => showToast('Copied entry'));
   }
 
   // ============================================
@@ -2578,34 +3118,50 @@
     hideContextMenu();
     const path = selectedPath || 'root';
     let formattedPath = '';
-    
+    let label = format;
+
     switch (format) {
-      case 'jsonpath':
-        formattedPath = convertToJSONPath(path);
-        break;
-      case 'jq':
-        formattedPath = convertToJQ(path);
-        break;
-      case 'javascript':
-        formattedPath = convertToJavaScript(path);
-        break;
-      case 'python':
-        formattedPath = convertToPython(path);
-        break;
-      default:
-        formattedPath = path;
+      case 'dot': formattedPath = convertToDotPath(path); label = 'dot notation'; break;
+      case 'bracket': formattedPath = convertToBracket(path); label = 'bracket'; break;
+      case 'pointer': formattedPath = convertToJSONPointer(path); label = 'JSON Pointer'; break;
+      case 'jsonpath': formattedPath = convertToJSONPath(path); label = 'JSONPath'; break;
+      case 'jq': formattedPath = convertToJQ(path); label = 'jq filter'; break;
+      case 'javascript': formattedPath = convertToJavaScript(path); label = 'JavaScript'; break;
+      case 'python': formattedPath = convertToPython(path); label = 'Python'; break;
+      default: formattedPath = path;
     }
-    
+
     navigator.clipboard.writeText(formattedPath).then(() => {
-      showToast(`Copied ${format.toUpperCase()} path`);
+      showToast(`Copied ${label}`);
     });
   }
-  
+
+  function convertToDotPath(path) {
+    if (!path || path === 'root') return '';
+    return path;
+  }
+
+  function convertToBracket(path) {
+    if (!path || path === 'root') return '';
+    const parts = parsePath(path);
+    return parts.map(p => p.type === 'index' ? `[${p.value}]` : `["${p.value}"]`).join('');
+  }
+
+  function convertToJSONPointer(path) {
+    if (!path || path === 'root') return '/';
+    const parts = parsePath(path);
+    // RFC 6901: escape ~ → ~0 and / → ~1
+    return '/' + parts.map(p => {
+      const v = String(p.value);
+      return v.replace(/~/g, '~0').replace(/\//g, '~1');
+    }).join('/');
+  }
+
   function convertToJSONPath(path) {
     if (!path || path === 'root') return '$';
     return '$.' + path;
   }
-  
+
   function convertToJQ(path) {
     if (!path || path === 'root') return '.';
     return '.' + path;
@@ -3171,7 +3727,7 @@
   
   function exportTypeScript() {
     const tsCode = generateTypeScriptInterfaces(jsonData, 'Root');
-    const header = '// Generated by JSON Vision\n// TypeScript Interfaces\n\n';
+    const header = '// Generated by NextJSON\n// TypeScript Interfaces\n\n';
     downloadFile(header + tsCode, 'types.ts', 'text/typescript');
     showToast('TypeScript interfaces exported');
   }
@@ -3350,6 +3906,81 @@
     return div.innerHTML;
   }
 
+  // Walk old + new JSON in parallel and collect dot-paths whose values
+  // differ. Used by the Edit JSON modal to know which subtrees to keep
+  // expanded after save.
+  function diffJsonPaths(oldVal, newVal, path = '', out = []) {
+    if (oldVal === newVal) return out;
+    const t = (v) => v === null ? 'null' : Array.isArray(v) ? 'array' : typeof v;
+    const ta = t(oldVal), tb = t(newVal);
+    if (ta !== tb) { out.push(path || 'root'); return out; }
+    if (ta === 'object') {
+      const a = oldVal || {}, b = newVal || {};
+      const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
+      keys.forEach(k => {
+        const np = path ? `${path}.${k}` : k;
+        if (!(k in a) || !(k in b)) { out.push(np); return; }
+        diffJsonPaths(a[k], b[k], np, out);
+      });
+    } else if (ta === 'array') {
+      const max = Math.max(oldVal.length, newVal.length);
+      for (let i = 0; i < max; i++) {
+        const np = `${path}[${i}]`;
+        if (i >= oldVal.length || i >= newVal.length) { out.push(np); continue; }
+        diffJsonPaths(oldVal[i], newVal[i], np, out);
+      }
+    } else if (oldVal !== newVal) {
+      out.push(path || 'root');
+    }
+    return out;
+  }
+
+  // Given a path like "user.profile.email" or "items[2].name", return all
+  // its CUMULATIVE ancestor paths (including itself). For "user.email"
+  // → ["user", "user.email"]. For "items[0].name" → ["items",
+  // "items[0]", "items[0].name"].
+  function ancestorsOf(path) {
+    if (!path || path === 'root') return [];
+    const out = [];
+    let acc = '';
+    let i = 0;
+    while (i < path.length) {
+      const ch = path[i];
+      if (ch === '.') {
+        if (acc && !acc.endsWith('.')) out.push(acc);
+        acc += '.';
+        i++;
+      } else if (ch === '[') {
+        if (acc && !acc.endsWith('.') && !acc.endsWith(']')) out.push(acc);
+        let j = i;
+        while (j < path.length && path[j] !== ']') j++;
+        acc += path.slice(i, j + 1);
+        i = j + 1;
+      } else {
+        acc += ch;
+        i++;
+      }
+    }
+    if (acc) out.push(acc);
+    return out;
+  }
+
+  // Truncated literal preview for the context menu's meta column.
+  // Strings keep their quotes (and escaping); objects/arrays serialize.
+  function formatValuePreview(value, type) {
+    let text;
+    if (value === undefined) text = '';
+    else if (type === 'string') text = JSON.stringify(value);
+    else if (type === 'object' || type === 'array') {
+      try { text = JSON.stringify(value); } catch (_) { text = ''; }
+    } else {
+      text = String(value);
+    }
+    const MAX = 24;
+    if (text.length > MAX) text = text.slice(0, MAX) + '…';
+    return text;
+  }
+
   function debounce(fn, delay) {
     let timeout;
     return (...args) => {
@@ -3362,11 +3993,13 @@
     switch(action) {
       case 'copy-json': copyJson(); break;
       case 'copy-minified': copyMinified(); break;
+      case 'copy-path': copyCurrentPath(); break;
       case 'copy-curl': copyFullAsCurl(); break;
       case 'copy-js': copyFullAsJS(); break;
       case 'copy-python': copyFullAsPython(); break;
       case 'copy-typescript': copyFullAsTypeScript(); break;
       case 'export-json': exportJSON(); break;
+      case 'export-minified': exportMinifiedJSON(); break;
       case 'export-csv': exportCSV(); break;
       case 'export-excel': exportExcel(); break;
       case 'export-yaml': exportYAML(); break;
@@ -3380,17 +4013,46 @@
 
   function updateStats() {
     const count = countNodes(jsonData);
-    stats.innerHTML = `<span class="stat">${count.total} nodes</span><span class="stat">${count.objects} objects</span><span class="stat">${count.arrays} arrays</span>`;
+    if (stats) {
+      stats.innerHTML = `<span class="stat">${count.total} nodes</span><span class="stat">${count.objects} objects</span><span class="stat">${count.arrays} arrays</span>`;
+    }
+    // Split Pro bottom status bar
+    const setText = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
+    setText('stats-nodes', count.total.toLocaleString() + ' nodes');
+    setText('stats-objects', count.objects.toLocaleString() + ' objects');
+    setText('stats-arrays', count.arrays.toLocaleString() + ' arrays');
+    setText('stats-depth', 'depth ' + count.depth);
+    try {
+      const formatted = JSON.stringify(jsonData, null, 2);
+      const minified = JSON.stringify(jsonData);
+      setText('stats-size', humanBytes(byteLength(formatted)));
+      const fmtBadge = document.getElementById('copy-formatted-size');
+      const minBadge = document.getElementById('copy-min-size');
+      if (fmtBadge) fmtBadge.textContent = humanBytes(byteLength(formatted));
+      if (minBadge) minBadge.textContent = humanBytes(byteLength(minified));
+    } catch (_) {}
   }
 
-  function countNodes(obj, counts = { total: 0, objects: 0, arrays: 0 }) {
+  function byteLength(s) {
+    return new Blob([s]).size;
+  }
+
+  function humanBytes(n) {
+    if (!n && n !== 0) return '';
+    if (n < 1024) return n + ' B';
+    if (n < 1024 * 1024) return (n / 1024).toFixed(1) + ' KB';
+    return (n / 1024 / 1024).toFixed(2) + ' MB';
+  }
+
+  function countNodes(obj, counts = { total: 0, objects: 0, arrays: 0, depth: 0 }, depth = 0) {
     counts.total++;
+    if (depth > counts.depth) counts.depth = depth;
     if (Array.isArray(obj)) {
       counts.arrays++;
-      obj.forEach(item => countNodes(item, counts));
+      obj.forEach(item => countNodes(item, counts, depth + 1));
     } else if (obj !== null && typeof obj === 'object') {
       counts.objects++;
-      Object.values(obj).forEach(val => countNodes(val, counts));
+      Object.values(obj).forEach(val => countNodes(val, counts, depth + 1));
     }
     return counts;
   }
@@ -3398,7 +4060,6 @@
   function expandAll() {
     document.querySelectorAll('.json-row.expandable.collapsed').forEach(row => {
       row.classList.remove('collapsed');
-      row.querySelector('.toggle').textContent = '▼';
       const children = row.nextElementSibling;
       const closingBracket = children?.nextElementSibling;
       if (children?.classList.contains('json-children')) {
@@ -3414,7 +4075,6 @@
   function collapseAll() {
     document.querySelectorAll('.json-row.expandable:not(.collapsed)').forEach(row => {
       row.classList.add('collapsed');
-      row.querySelector('.toggle').textContent = '▶';
       const children = row.nextElementSibling;
       const closingBracket = children?.nextElementSibling;
       if (children?.classList.contains('json-children')) {
@@ -3435,25 +4095,25 @@
   function updateBreadcrumb(path) {
     const breadcrumbContent = breadcrumbBar.querySelector('.breadcrumb-content');
     if (!breadcrumbContent) return;
-    
+
     if (!path) {
-      breadcrumbContent.innerHTML = '<span class="breadcrumb-item" data-path="">root</span>';
+      breadcrumbContent.innerHTML = '<span class="crumb-empty">$ — hover a node to track</span>';
       return;
     }
-    
+
     const parts = path.split(/\.|\[/).filter(Boolean);
-    let html = '<span class="breadcrumb-item" data-path="">root</span>';
+    let html = '<span class="breadcrumb-item" data-path="">$</span>';
     let currentPath = '';
-    
+
     parts.forEach((part, i) => {
       const isIndex = part.endsWith(']');
       const cleanPart = part.replace(']', '');
       currentPath += isIndex ? `[${cleanPart}]` : (i === 0 ? cleanPart : `.${cleanPart}`);
-      html += ` <span class="breadcrumb-separator">›</span> <span class="breadcrumb-item" data-path="${currentPath}">${cleanPart}</span>`;
+      html += `<span class="breadcrumb-separator">›</span><span class="breadcrumb-item" data-path="${currentPath}">${cleanPart}</span>`;
     });
-    
+
     breadcrumbContent.innerHTML = html;
-    
+
     breadcrumbContent.querySelectorAll('.breadcrumb-item').forEach(item => {
       item.addEventListener('click', () => {
         const p = item.dataset.path;

@@ -151,29 +151,67 @@
     return null;
   }
 
-  // Replace the page content with formatted JSON viewer
+  // Replace the page content with the formatted JSON viewer.
+  // Instead of redirecting (which would replace the URL bar with
+  // chrome-extension://...), we inject the viewer as a full-viewport
+  // iframe over the page so the address bar keeps showing the original
+  // *.json URL.
   function formatPage() {
     if (window.__jsonFormatterRedirected) return;
     window.__jsonFormatterRedirected = true;
-    
+
     const jsonContent = getJsonContent();
     if (!jsonContent) return;
 
     try {
-      // Verify it's valid JSON
       JSON.parse(jsonContent);
-      
-      // Store the JSON and load the viewer
-      chrome.storage.local.set({ 
+
+      chrome.storage.local.set({
         jsonToFormat: jsonContent,
         jsonSourceUrl: window.location.href
       }, () => {
-        // Redirect to the viewer page
-        window.location.href = chrome.runtime.getURL('html/viewer.html') + 
-          '?source=' + encodeURIComponent(window.location.href);
+        injectViewerIframe();
       });
     } catch (e) {
-      console.error('JSON Formatter: Failed to parse JSON', e);
+      console.error('NextJSON: Failed to parse JSON', e);
+    }
+  }
+
+  function injectViewerIframe() {
+    if (document.getElementById('__next-json-viewer')) return;
+
+    // Reset host-page chrome and hide the raw <pre>/<body> content so
+    // only the iframe shows. !important to beat any stylesheet the page
+    // may inject before our content script runs.
+    const reset = document.createElement('style');
+    reset.id = '__next-json-reset';
+    reset.textContent =
+      'html,body{margin:0!important;padding:0!important;height:100%!important;width:100%!important;overflow:hidden!important;background:#fafaf9!important}' +
+      'body>*:not(#__next-json-viewer){display:none!important}';
+    (document.head || document.documentElement).appendChild(reset);
+
+    const iframe = document.createElement('iframe');
+    iframe.id = '__next-json-viewer';
+    iframe.src = chrome.runtime.getURL('html/viewer.html');
+    iframe.allow = 'clipboard-read; clipboard-write';
+    iframe.style.cssText = [
+      'position:fixed',
+      'inset:0',
+      'width:100vw',
+      'height:100vh',
+      'border:0',
+      'margin:0',
+      'padding:0',
+      'z-index:2147483647',
+      'background:#fafaf9',
+      'color-scheme:normal',
+    ].join(';');
+
+    if (document.body) {
+      document.body.appendChild(iframe);
+    } else {
+      // Body not ready yet — wait then inject.
+      document.addEventListener('DOMContentLoaded', () => document.body.appendChild(iframe), { once: true });
     }
   }
 
