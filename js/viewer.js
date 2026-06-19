@@ -904,7 +904,7 @@
         // No JSON in storage - show helpful message
         loading.innerHTML = `
           <div class="empty-state-content">
-            <img src="../icons/logos/logo.svg" alt="NextJSON" class="empty-state-logo">
+            <img src="../icons/logo.svg" alt="NextJSON" class="empty-state-logo">
             <h2 class="empty-state-title">No JSON loaded</h2>
             <p class="empty-state-desc">Navigate to any <code>.json</code> URL or API endpoint<br>and it will be formatted here automatically.</p>
             <div class="empty-state-hints">
