@@ -8,10 +8,10 @@
     "extension_pages": "default-src 'self'; script-src 'self'; object-src 'none'; base-uri 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https:"
   },
   "icons": {
-    "16": "icons/icon16.png",
-    "32": "icons/icon32.png",
-    "48": "icons/icon48.png",
-    "128": "icons/icon128.png"
+    "16": "icons/logos/icon16.png",
+    "32": "icons/logos/icon32.png",
+    "48": "icons/logos/icon48.png",
+    "128": "icons/logos/icon128.png"
   },
   "permissions": [
     "storage"
@@ -25,10 +25,10 @@
   "action": {
     "default_popup": "html/popup.html",
     "default_icon": {
-      "16": "icons/icon16.png",
-      "32": "icons/icon32.png",
-      "48": "icons/icon48.png",
-      "128": "icons/icon128.png"
+      "16": "icons/logos/icon16.png",
+      "32": "icons/logos/icon32.png",
+      "48": "icons/logos/icon48.png",
+      "128": "icons/logos/icon128.png"
     }
   },
   "content_scripts": [
