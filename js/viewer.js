@@ -1,4 +1,9 @@
 // NextJSON v1.0.1 - JSON Parser, Formatter, and Viewer
+
+// Activate the web font without render-blocking first paint.
+// CSP-safe (no inline handler): the font <link> ships as media="print"
+// so it never blocks rendering; we flip it to "all" once this script runs.
+(function () { var f = document.getElementById('font-css'); if (f) f.media = 'all'; })();
 (function() {
   'use strict';
 

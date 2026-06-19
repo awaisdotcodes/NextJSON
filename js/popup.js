@@ -1,5 +1,11 @@
 // NextJSON · Popup Pro — Chrome popup at 800x600.
 // Vanilla JS, two modes: input (Paste / Fetch URL) -> output (tree / raw).
+
+// Activate the web font without render-blocking first paint.
+// CSP-safe (no inline handler): the font <link> ships as media="print"
+// so it never blocks the popup paint; we flip it to "all" once JS runs.
+(function () { var f = document.getElementById('font-css'); if (f) f.media = 'all'; })();
+
 (function () {
   'use strict';
 
