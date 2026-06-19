@@ -159,7 +159,7 @@
             <div class="ui-card-image-container">
               ${discount ? `<div class="ui-card-badge">-${discount}%</div>` : ''}
               ${image 
-                ? `<img src="${image}" class="ui-card-image" onerror="this.parentElement.innerHTML='<div class=\\'ui-no-image\\'>📷</div>'">`
+                ? `<img src="${this.escapeHtml(this.safeUrl(image))}" class="ui-card-image" onerror="this.parentElement.innerHTML='<div class=\\'ui-no-image\\'>📷</div>'">`
                 : '<div class="ui-no-image">📷</div>'
               }
             </div>
@@ -208,7 +208,7 @@
       for (const [section, fields] of Object.entries(sections)) {
         html += `
           <div class="ui-form-section">
-            <div class="ui-form-section-title">${section}</div>
+            <div class="ui-form-section-title">${this.escapeHtml(section)}</div>
             ${fields.map(f => this.renderFormField(f)).join('')}
           </div>
         `;
@@ -230,8 +230,8 @@
       if (type === 'boolean') {
         return `
           <div class="ui-form-toggle-row">
-            <span class="ui-form-label">${this.capitalize(label)}</span>
-            <div class="ui-toggle-switch ${value ? 'active' : ''}" data-key="${key}"></div>
+            <span class="ui-form-label">${this.escapeHtml(this.capitalize(label))}</span>
+            <div class="ui-toggle-switch ${value ? 'active' : ''}" data-key="${this.escapeHtml(key)}"></div>
           </div>
         `;
       }
@@ -239,9 +239,9 @@
       if (type === 'image') {
         return `
           <div class="ui-form-group">
-            <label class="ui-form-label">${this.capitalize(label)}</label>
+            <label class="ui-form-label">${this.escapeHtml(this.capitalize(label))}</label>
             <div class="ui-image-preview-box">
-              <img src="${value}" onerror="this.parentElement.innerHTML='No image'">
+              <img src="${this.escapeHtml(this.safeUrl(value))}" onerror="this.parentElement.innerHTML='No image'">
             </div>
           </div>
         `;
@@ -253,16 +253,16 @@
       if (isLongText) {
         return `
           <div class="ui-form-group">
-            <label class="ui-form-label">${this.capitalize(label)}</label>
-            <textarea class="ui-form-textarea" data-key="${key}">${this.escapeHtml(String(value ?? ''))}</textarea>
+            <label class="ui-form-label">${this.escapeHtml(this.capitalize(label))}</label>
+            <textarea class="ui-form-textarea" data-key="${this.escapeHtml(key)}">${this.escapeHtml(String(value ?? ''))}</textarea>
           </div>
         `;
       }
       
       return `
         <div class="ui-form-group">
-          <label class="ui-form-label">${this.capitalize(label)}</label>
-          <input type="${inputType}" class="ui-form-input" value="${this.escapeHtml(String(value ?? ''))}" data-key="${key}">
+          <label class="ui-form-label">${this.escapeHtml(this.capitalize(label))}</label>
+          <input type="${inputType}" class="ui-form-input" value="${this.escapeHtml(String(value ?? ''))}" data-key="${this.escapeHtml(key)}">
         </div>
       `;
     }
@@ -323,7 +323,7 @@
             <table class="ui-data-table">
               <thead>
                 <tr>
-                  ${displayKeys.map(k => `<th>${this.capitalize(k.split('.').pop().replace(/_/g, ' '))}</th>`).join('')}
+                  ${displayKeys.map(k => `<th>${this.escapeHtml(this.capitalize(k.split('.').pop().replace(/_/g, ' ')))}</th>`).join('')}
                 </tr>
               </thead>
               <tbody>
@@ -348,7 +348,7 @@
       if (typeof value === 'boolean') return value ? '<span class="ui-bool-true">✓</span>' : '<span class="ui-bool-false">✗</span>';
       if (typeof value === 'string' && this.isUrl(value)) {
         if (value.match(/\.(jpg|jpeg|png|gif|webp)/i)) {
-          return `<img src="${value}" class="ui-table-img" onerror="this.outerHTML='🖼️'">`;
+          return `<img src="${this.escapeHtml(this.safeUrl(value))}" class="ui-table-img" onerror="this.outerHTML='🖼️'">`;
         }
         return '<span class="ui-link">🔗 Link</span>';
       }
@@ -371,8 +371,8 @@
       for (const stat of stats) {
         html += `
           <div class="ui-stat-card ${stat.highlight ? 'highlight' : ''}">
-            <div class="ui-stat-label">${stat.label}</div>
-            <div class="ui-stat-value">${stat.value}</div>
+            <div class="ui-stat-label">${this.escapeHtml(stat.label)}</div>
+            <div class="ui-stat-value">${this.escapeHtml(String(stat.value))}</div>
           </div>
         `;
       }
@@ -476,8 +476,8 @@
             <div class="ui-timeline-item">
               <div class="ui-timeline-marker"></div>
               <div class="ui-timeline-content">
-                <div class="ui-timeline-date">${event.formatted}</div>
-                <div class="ui-timeline-label">${event.label}</div>
+                <div class="ui-timeline-date">${this.escapeHtml(event.formatted)}</div>
+                <div class="ui-timeline-label">${this.escapeHtml(event.label)}</div>
               </div>
             </div>
           `).join('')}
@@ -508,7 +508,7 @@
             <div class="ui-profile-header">
               <div class="ui-profile-avatar">
                 ${avatar 
-                  ? `<img src="${avatar}" onerror="this.outerHTML='<span class=\\'ui-avatar-placeholder\\'>👤</span>'">`
+                  ? `<img src="${this.escapeHtml(this.safeUrl(avatar))}" onerror="this.outerHTML='<span class=\\'ui-avatar-placeholder\\'>👤</span>'">`
                   : '<span class="ui-avatar-placeholder">👤</span>'
                 }
               </div>
@@ -535,7 +535,7 @@
               ${website ? `
                 <div class="ui-profile-detail">
                   <span class="ui-detail-icon">🌐</span>
-                  <a href="${website}" target="_blank">${this.escapeHtml(website)}</a>
+                  <a href="${this.escapeHtml(this.safeUrl(website))}" target="_blank" rel="noopener">${this.escapeHtml(website)}</a>
                 </div>
               ` : ''}
             </div>
@@ -661,9 +661,23 @@
     }
 
     escapeHtml(str) {
-      const div = document.createElement('div');
-      div.textContent = str;
-      return div.innerHTML;
+      return String(str == null ? '' : str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    // Return a value only if it is a safe http(s) URL, else ''. Blocks
+    // javascript:/data:/vbscript: URLs from reaching href/src attributes.
+    safeUrl(u) {
+      try {
+        const x = new URL(String(u), location.href);
+        return (x.protocol === 'http:' || x.protocol === 'https:') ? x.href : '';
+      } catch (_) {
+        return '';
+      }
     }
   }
 

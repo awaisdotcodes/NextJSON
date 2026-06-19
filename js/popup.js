@@ -287,7 +287,7 @@
       let valueHtml = '';
       if (t === 'string') valueHtml = `<span class="pp-string">"${highlightStr(v, 'value')}"</span>`;
       else if (t === 'number') valueHtml = `<span class="pp-number">${highlightStr(String(v), 'value')}</span>`;
-      else if (t === 'boolean') valueHtml = `<span class="pp-bool">${v}</span>`;
+      else if (t === 'boolean') valueHtml = `<span class="pp-bool">${escapeHtml(String(v))}</span>`;
       else if (t === 'null') valueHtml = `<span class="pp-null">null</span>`;
       else valueHtml = `<span>${escapeHtml(String(v))}</span>`;
 

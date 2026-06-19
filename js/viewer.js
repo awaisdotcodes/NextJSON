@@ -898,7 +898,7 @@
           updateStats();
           loading.style.display = 'none';
         } catch (e) {
-          loading.innerHTML = `<div class="error">❌ Invalid JSON: ${e.message}</div>`;
+          loading.innerHTML = `<div class="error">❌ Invalid JSON: ${escapeHtml(e.message)}</div>`;
         }
       } else {
         // No JSON in storage - show helpful message
@@ -1051,7 +1051,7 @@
       const entries = isArray ? value : Object.entries(value);
       const count = isArray ? value.length : entries.length;
       
-      html += `<div class="json-row expandable" data-path="${pathStr}" data-key="${key}" data-type="${type}" style="padding-left:${indent}px">`;
+      html += `<div class="json-row expandable" data-path="${escapeAttr(pathStr)}" data-key="${escapeAttr(key)}" data-type="${type}" style="padding-left:${indent}px">`;
       html += `<span class="toggle"><svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2 1.5L6 4.5L2 7.5"/></svg></span>`;
       if (key !== null && key !== undefined && key !== '') {
         if (typeof key === 'number') {
@@ -1080,7 +1080,7 @@
       html += `</div>`;
       html += `<div class="json-row bracket-close" style="padding-left:${indent}px"><span class="toggle-empty"></span><span class="bracket">${closeBracket}${comma}</span></div>`;
     } else {
-      html += `<div class="json-row" data-path="${pathStr}" data-key="${key}" data-type="${type}" style="padding-left:${indent}px">`;
+      html += `<div class="json-row" data-path="${escapeAttr(pathStr)}" data-key="${escapeAttr(key)}" data-type="${type}" style="padding-left:${indent}px">`;
       html += `<span class="toggle-empty"></span>`;
       if (key !== null && key !== undefined && key !== '') {
         if (typeof key === 'number') {
@@ -1105,14 +1105,14 @@
     // Date formatting
     if (formatDates && type === 'string' && isDateString(value)) {
       const formatted = formatDateValue(value);
-      tooltip = ` data-date="${escapeHtml(value)}" title="${formatted.full}"`;
+      tooltip = ` data-date="${escapeAttr(value)}" title="${escapeAttr(formatted.full)}"`;
       extraClass = ' date-value';
     }
     
     // Detect timestamps
     if (formatDates && type === 'number' && isTimestamp(value)) {
       const formatted = formatTimestamp(value);
-      tooltip = ` data-timestamp="${value}" title="${formatted.full}"`;
+      tooltip = ` data-timestamp="${value}" title="${escapeAttr(formatted.full)}"`;
       extraClass = ' timestamp-value';
     }
     
@@ -1122,9 +1122,9 @@
       if (isUrl(value)) {
         if (strValue.length > MAX_LENGTH) {
           const truncated = strValue.substring(0, MAX_LENGTH);
-          return `<span class="value string url${extraClass}"${tooltip}>"<a href="${escapeHtml(value)}" target="_blank" rel="noopener"><span class="truncated-text">${escapeHtml(truncated)}</span></a><span class="truncated-indicator">...</span>"<button class="see-more-btn">See more</button><span class="full-text" style="display:none;"><a href="${escapeHtml(value)}" target="_blank" rel="noopener">${escapeHtml(strValue)}</a></span><button class="see-less-btn" style="display:none;">See less</button></span>${comma}`;
+          return `<span class="value string url${extraClass}"${tooltip}>"<a href="${escapeAttr(safeUrl(value))}" target="_blank" rel="noopener"><span class="truncated-text">${escapeHtml(truncated)}</span></a><span class="truncated-indicator">...</span>"<button class="see-more-btn">See more</button><span class="full-text" style="display:none;"><a href="${escapeAttr(safeUrl(value))}" target="_blank" rel="noopener">${escapeHtml(strValue)}</a></span><button class="see-less-btn" style="display:none;">See less</button></span>${comma}`;
         }
-        return `<span class="value string url${extraClass}"${tooltip}>"<a href="${escapeHtml(value)}" target="_blank" rel="noopener">${escapeHtml(value)}</a>"</span>${comma}`;
+        return `<span class="value string url${extraClass}"${tooltip}>"<a href="${escapeAttr(safeUrl(value))}" target="_blank" rel="noopener">${escapeHtml(value)}</a>"</span>${comma}`;
       }
       // Truncate long strings
       if (strValue.length > MAX_LENGTH) {
@@ -1797,7 +1797,7 @@
     if (typeof value === 'boolean') return value ? '✓' : '✗';
     if (typeof value === 'object') return '<span class="object">{...}</span>';
     if (typeof value === 'string' && isUrl(value)) {
-      return `<a href="${escapeHtml(value)}" target="_blank">🔗 Link</a>`;
+      return `<a href="${escapeAttr(safeUrl(value))}" target="_blank" rel="noopener">🔗 Link</a>`;
     }
     const str = String(value);
     return escapeHtml(str.length > 50 ? str.substring(0, 50) + '...' : str);
@@ -2204,8 +2204,8 @@
         onNodeClick: (node) => {
           graphInfoPanel.classList.add('visible');
           infoPanelContent.innerHTML = `
-            <div class="info-row"><span class="info-label">Path:</span> ${node.path || 'root'}</div>
-            <div class="info-row"><span class="info-label">Type:</span> <span class="type-badge type-${node.type}">${node.type}</span></div>
+            <div class="info-row"><span class="info-label">Path:</span> ${escapeHtml(node.path || 'root')}</div>
+            <div class="info-row"><span class="info-label">Type:</span> <span class="type-badge type-${escapeAttr(node.type)}">${escapeHtml(node.type)}</span></div>
             <div class="info-row"><span class="info-label">Value:</span> <pre>${escapeHtml(JSON.stringify(node.value, null, 2).substring(0, 500))}</pre></div>
           `;
         }
@@ -3578,7 +3578,7 @@
       previewValue = JSON.stringify(selectedValue);
     }
     
-    deletePreview.innerHTML = `<strong>${selectedKey}</strong>: ${previewValue}`;
+    deletePreview.innerHTML = `<strong>${escapeHtml(selectedKey)}</strong>: ${escapeHtml(previewValue)}`;
     
     deleteModal.style.display = 'flex';
   }
@@ -3906,9 +3906,26 @@
   }
 
   function escapeHtml(str) {
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
+    return String(str == null ? '' : str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+  // Alias for clarity at attribute-value sinks. escapeHtml now also encodes
+  // quotes, so it is safe for both text and double/single-quoted attributes.
+  const escapeAttr = escapeHtml;
+
+  // Return a value only if it is a safe http(s) URL, else ''. Prevents
+  // javascript:/data:/vbscript: URLs from reaching href/src attributes.
+  function safeUrl(u) {
+    try {
+      const x = new URL(String(u), location.href);
+      return (x.protocol === 'http:' || x.protocol === 'https:') ? x.href : '';
+    } catch (_) {
+      return '';
+    }
   }
 
   // Walk old + new JSON in parallel and collect dot-paths whose values
@@ -4114,7 +4131,7 @@
       const isIndex = part.endsWith(']');
       const cleanPart = part.replace(']', '');
       currentPath += isIndex ? `[${cleanPart}]` : (i === 0 ? cleanPart : `.${cleanPart}`);
-      html += `<span class="breadcrumb-separator">›</span><span class="breadcrumb-item" data-path="${currentPath}">${cleanPart}</span>`;
+      html += `<span class="breadcrumb-separator">›</span><span class="breadcrumb-item" data-path="${escapeAttr(currentPath)}">${escapeHtml(cleanPart)}</span>`;
     });
 
     breadcrumbContent.innerHTML = html;

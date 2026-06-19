@@ -42,8 +42,9 @@
         'tonumber': (input) => Number(input),
         'ascii_downcase': (input) => typeof input === 'string' ? input.toLowerCase() : input,
         'ascii_upcase': (input) => typeof input === 'string' ? input.toUpperCase() : input,
-        'ltrimstr': (input, args) => typeof input === 'string' && args ? input.replace(new RegExp(`^${args}`), '') : input,
-        'rtrimstr': (input, args) => typeof input === 'string' && args ? input.replace(new RegExp(`${args}$`), '') : input,
+        // Literal prefix/suffix strip (no regex — avoids ReDoS + regex-injection from user query args).
+        'ltrimstr': (input, args) => (typeof input === 'string' && args && input.startsWith(args)) ? input.slice(args.length) : input,
+        'rtrimstr': (input, args) => (typeof input === 'string' && args && input.endsWith(args)) ? input.slice(0, input.length - args.length) : input,
         'trim': (input) => typeof input === 'string' ? input.trim() : input,
         'split': (input, args) => typeof input === 'string' ? input.split(args || '') : input,
         'join': (input, args) => Array.isArray(input) ? input.join(args || '') : input,
@@ -236,7 +237,9 @@
         if (result === undefined || result === null) return undefined;
 
         if (token.type === 'key') {
-          result = result[token.value];
+          // Never traverse into prototype-chain keys via a query path.
+          if (token.value === '__proto__' || token.value === 'constructor' || token.value === 'prototype') return undefined;
+          result = Object.prototype.hasOwnProperty.call(result, token.value) ? result[token.value] : undefined;
         } else if (token.type === 'index') {
           if (Array.isArray(result)) {
             const idx = token.value < 0 ? result.length + token.value : token.value;
@@ -437,21 +440,24 @@
       const result = {};
       const pairs = this.splitComma(inner);
       
+      const isUnsafeKey = (k) => k === '__proto__' || k === 'constructor' || k === 'prototype';
       for (const pair of pairs) {
         const colonIdx = pair.indexOf(':');
         if (colonIdx === -1) {
           // Shorthand: just a key
           const key = pair.trim().replace(/^\./, '');
+          if (isUnsafeKey(key)) continue;   // block prototype pollution
           result[key] = this.executeJq(data, '.' + key);
         } else {
           let key = pair.slice(0, colonIdx).trim();
           const value = pair.slice(colonIdx + 1).trim();
-          
+
           // Remove quotes from key
           if ((key.startsWith('"') && key.endsWith('"')) || (key.startsWith("'") && key.endsWith("'"))) {
             key = key.slice(1, -1);
           }
-          
+
+          if (isUnsafeKey(key)) continue;   // block prototype pollution
           result[key] = this.executeJq(data, value);
         }
       }
