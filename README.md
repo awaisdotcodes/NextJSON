@@ -4,12 +4,12 @@
 
 ### The Most Powerful JSON Formatter & Viewer for Chrome
 
-[![Chrome Web Store](https://img.shields.io/badge/Chrome_Web_Store-v1.0.1-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white)](https://chrome.google.com/webstore/detail/glmpfaiijaffmbihnkhneboblmkocnmj)
+[![Chrome Web Store](https://img.shields.io/badge/Chrome_Web_Store-v4.0.2-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white)](https://chrome.google.com/webstore/detail/glmpfaiijaffmbihnkhneboblmkocnmj)
 [![Manifest V3](https://img.shields.io/badge/Manifest-V3-34A853?style=for-the-badge&logo=googlechrome&logoColor=white)](#)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)](#license)
 [![Zero Dependencies](https://img.shields.io/badge/Dependencies-Zero-success?style=for-the-badge)](#architecture)
 
-**Tree view. Graph visualization. Diff tool. JQ queries. 7 themes. Zero dependencies.**
+**Tree view. Graph visualization. Diff tool. JQ queries. Inline editing. Zero dependencies.**
 
 [Install from Chrome Web Store](https://chrome.google.com/webstore/detail/glmpfaiijaffmbihnkhneboblmkocnmj) &nbsp;&middot;&nbsp; [Report Bug](../../issues) &nbsp;&middot;&nbsp; [Request Feature](../../issues)
 
@@ -20,6 +20,8 @@
 ## Why NextJSON?
 
 Most JSON formatters stop at syntax highlighting. NextJSON is a **full-featured JSON IDE** in your browser — with a tree explorer, graph diagrams, a JQ query engine, diff comparison, inline editing, and six export formats. Built with pure vanilla JavaScript, no frameworks, no build step, no bloat.
+
+**100% local.** All parsing, formatting, and rendering happens in your browser — no JSON is ever sent to a server. The only network requests are the ones *you* trigger via Fetch URL.
 
 ## Features
 
@@ -119,31 +121,32 @@ Raw JSON, Minified JSON, cURL command, JavaScript (ES6), Python dict, TypeScript
 
 ### Context Menu (Right-Click)
 
-**Copy** — Path, JSONPath, JQ path, JavaScript path, Python path, Key, Value, Complete object
+**Copy** — Copy path, Copy path as (Dot notation, Bracket, JSON Pointer, JSONPath, jq filter), Copy key, Copy value, Copy entry
 
 **Edit** — Edit value, Add key (inside/below), Delete
 
-**Actions** — View as table, Search in Google, Highlight matching keys, Filter by key, Show data type
+**Actions** — Search Google, Highlight matching keys, Filter to this key, Show data type
 
-### 7 Built-in Themes
+Each row shows a live preview of the path/key/value it will copy before you click.
+
+### Light & Dark Themes
+
+A clean, two-theme design system (codenamed *Split Pro*) toggled by a single sun/moon control — Geist + JetBrains Mono, hairline borders, and an indigo `#7c3aed` accent.
 
 | Theme | Style |
 |-------|-------|
-| **Dark** | Default — dark background, bright syntax |
-| **Light** | Clean light background with muted tones |
-| **Monokai** | Warm editor classic |
-| **Dracula** | Purple and pink accents |
-| **Nord** | Arctic frost-inspired palette |
-| **Solarized Dark** | Ethan Schoonover's precision palette |
-| **GitHub Dark** | GitHub's official dark theme |
+| **Light** | Default — warm off-white surface with muted, high-contrast syntax |
+| **Dark** | Deep charcoal surface with bright syntax tokens |
+
+> Legacy palettes (Monokai, Dracula, Nord, Solarized, GitHub Dark) remain wired into the engine for backwards compatibility but are no longer surfaced in the redesigned UI.
 
 ### Smart Detection
 
-- Auto-formats `.json` files and API responses
+- Auto-formats `.json` files and API responses — rendered as a full-viewport overlay that **keeps the original URL in the address bar** (no redirect to a `chrome-extension://` page)
 - GraphQL response detection with `data`/`errors` tab separation
 - Unix timestamp formatting (seconds and milliseconds) with relative time tooltips
 - URL source tracking and breadcrumb navigation
-- Import from URL with built-in CORS bypass
+- Fetch from URL with custom method + headers and built-in CORS bypass (30 s timeout)
 
 ## Keyboard Shortcuts
 
@@ -184,24 +187,25 @@ git clone https://github.com/AwaisdotCodes/NextJSON.git
 
 **Manual** — Click the extension icon, paste JSON, hit `Ctrl+Enter` or click **Format JSON**.
 
-**From URL** — Use the URL import feature to fetch JSON from any endpoint (CORS handled automatically).
+**From URL** — Use the Fetch URL feature to pull JSON from any endpoint with a custom method and headers (CORS handled automatically).
 
 ## Architecture
 
 ```
 manifest.json          # Extension manifest (MV3)
 js/
-  background.js        # Service worker — CORS bypass via message passing
-  content.js           # Content script — JSON page detection & redirect
-  popup.js             # Popup UI for manual JSON input
-  viewer.js            # Core application (3,400+ lines)
+  background.js        # Service worker — CORS-bypass fetch (method + headers, 30s timeout)
+  content.js           # Content script — JSON detection + iframe overlay (preserves URL)
+  popup.js             # Popup state machine — paste / fetch, in-popup tree
+  viewer.js            # Core application (4,100+ lines)
   tree-graph.js        # Graph visualization engine
   ui-renderer.js       # UI preview renderer (cards, forms, dashboards)
   jq-lite.js           # JQ/JSONPath query engine
 css/
-  viewer.css           # Main styles + 7 theme definitions
+  viewer.css           # Main styles + Light/Dark design tokens
   graph.css            # Graph visualization styles
   ui-renderer.css      # UI preview component styles
+  popup.css            # Popup styles
 html/
   viewer.html          # Main viewer page
   popup.html           # Extension popup
