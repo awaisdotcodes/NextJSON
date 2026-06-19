@@ -420,7 +420,7 @@
       dom.treeWrap.hidden = true;
       dom.rawPre.hidden = false;
       dom.rawPre.classList.toggle('no-wrap', !state.wrap);
-      dom.rawPre.textContent = state.formatted;
+      dom.rawPre.textContent = state.minified;
     }
     const n = countHits();
     dom.findHits.textContent = state.search && n > 0 ? String(n) : '';

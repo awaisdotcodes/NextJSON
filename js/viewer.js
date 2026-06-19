@@ -609,7 +609,7 @@
       renderJson(false);
       updateStats();
       const rawOut = document.getElementById('raw-output');
-      if (rawOut) rawOut.textContent = rawJson;
+      if (rawOut) rawOut.textContent = JSON.stringify(parsed);
       // Reflect the new undo history in the toolbar buttons.
       updateUndoRedoButtons();
 
@@ -932,8 +932,8 @@
     allRows = [];
     const html = renderValue(dataToRender, '', '', 0);
     jsonOutput.innerHTML = html;
-    rawOutput.textContent = JSON.stringify(jsonData, null, 2);
-    
+    rawOutput.textContent = JSON.stringify(jsonData);
+
     // Attach event listeners
     jsonOutput.querySelectorAll('.toggle').forEach(el => {
       el.addEventListener('click', (e) => {
