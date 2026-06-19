@@ -609,4 +609,5 @@ body.pp {
   margin-left: auto;
   display: inline-flex; align-items: center; gap: 8px;
 }
-.pp-bottom-right .src { color: var(--pp-text-2); }
+.pp-bottom-right .src { color: var(--pp-text-2); text-decoration: none; }
+.pp-bottom-right a.src:hover { color: var(--pp-text); text-decoration: underline; }

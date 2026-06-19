@@ -1,20 +1,20 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light" style="width:750px;height:550px">
+<html lang="en" data-theme="dark" style="width:750px;height:550px">
 <head>
   <meta charset="UTF-8">
   <title>NextJSON</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <noscript><link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet"></noscript>
   <link rel="stylesheet" href="../css/popup.css">
 </head>
 <body class="pp">
   <!-- ========== Top bar (44px) ========== -->
   <div class="pp-top">
     <div class="pp-brand">
-      <img class="pp-logo" src="../icons/logo.png" width="20" height="20" alt="NextJSON">
+      <img class="pp-logo" src="../icons/logo.svg" width="20" height="20" alt="NextJSON">
       <span class="pp-brand-name">NextJSON</span>
-      <span class="pp-ver">4.0</span>
     </div>
     <div class="pp-divider"></div>
     <span class="pp-status"><span class="dot"></span>Active</span>
@@ -207,7 +207,7 @@
     <span id="status-left">○ paste JSON to begin</span>
     <span class="pp-bottom-right">
       <span id="status-size"></span>
-      <span class="src">sourcelogs.com</span>
+      <a class="src" href="https://sourcelogs.com" target="_blank" rel="noopener">sourcelogs.com</a>
     </span>
   </div>
 

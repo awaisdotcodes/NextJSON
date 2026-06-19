@@ -1,4 +1,4 @@
-// NextJSON v4.0 - JSON Parser, Formatter, and Viewer
+// NextJSON v1.0.1 - JSON Parser, Formatter, and Viewer
 (function() {
   'use strict';
 
@@ -56,7 +56,7 @@
   let editMode = false;
   let pendingEdits = {};
   let formatDates = false;
-  let currentTheme = 'light';
+  let currentTheme = 'dark';
   let focusedRowIndex = -1;
   let isGraphQL = false;
   let graphqlView = 'all';
@@ -89,8 +89,8 @@
     if (saved) {
       currentTheme = saved;
     } else {
-      // Default to light unless the user's OS prefers dark
-      currentTheme = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+      // Default to dark theme for new users
+      currentTheme = 'dark';
     }
     applyTheme();
   }
@@ -899,7 +899,7 @@
         // No JSON in storage - show helpful message
         loading.innerHTML = `
           <div class="empty-state-content">
-            <img src="../icons/logo.png" alt="NextJSON" class="empty-state-logo">
+            <img src="../icons/logo.svg" alt="NextJSON" class="empty-state-logo">
             <h2 class="empty-state-title">No JSON loaded</h2>
             <p class="empty-state-desc">Navigate to any <code>.json</code> URL or API endpoint<br>and it will be formatted here automatically.</p>
             <div class="empty-state-hints">

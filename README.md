@@ -4,7 +4,7 @@
 
 ### The Most Powerful JSON Formatter & Viewer for Chrome
 
-[![Chrome Web Store](https://img.shields.io/badge/Chrome_Web_Store-v4.0-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white)](https://chrome.google.com/webstore/detail/glmpfaiijaffmbihnkhneboblmkocnmj)
+[![Chrome Web Store](https://img.shields.io/badge/Chrome_Web_Store-v1.0.1-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white)](https://chrome.google.com/webstore/detail/glmpfaiijaffmbihnkhneboblmkocnmj)
 [![Manifest V3](https://img.shields.io/badge/Manifest-V3-34A853?style=for-the-badge&logo=googlechrome&logoColor=white)](#)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)](#license)
 [![Zero Dependencies](https://img.shields.io/badge/Dependencies-Zero-success?style=for-the-badge)](#architecture)

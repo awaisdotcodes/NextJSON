@@ -8,7 +8,7 @@
     mode: 'input',          // 'input' | 'output'
     source: 'paste',        // 'paste' | 'fetch'
     view: 'tree',           // 'tree' | 'raw'
-    dark: false,
+    dark: true,
     input: '',
     url: '',
     method: 'GET',
